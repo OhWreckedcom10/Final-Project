@@ -2,10 +2,10 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
-COPY app/app.py .
-
 RUN pip install --no-cache-dir flask
+
+COPY app/app.py /app/app.py
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["python", "/app/app.py"]
