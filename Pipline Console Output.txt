@@ -1,0 +1,223 @@
+Started by user Jenkins Admin
+Obtained Jenkinsfile from git https://github.com/OhWreckedcom10/Final-Project.git
+[Pipeline] Start of Pipeline
+[Pipeline] podTemplate
+[Pipeline] {
+[Pipeline] node
+Created Pod: kubernetes jenkins/final-project-13-1n187-lmjzw-3lw41
+[PodInfo] jenkins/final-project-13-1n187-lmjzw-3lw41
+	Container [jnlp] waiting [ContainerCreating] No message
+	Container [kaniko] waiting [ContainerCreating] No message
+	Container [kubectl] waiting [ContainerCreating] No message
+	Pod [Pending][ContainersNotReady] containers with unready status: [kaniko kubectl jnlp]
+Agent final-project-13-1n187-lmjzw-3lw41 is provisioned from template Final-Project_13-1n187-lmjzw
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  annotations:
+    kubernetes.jenkins.io/last-refresh: "1781638872501"
+    buildUrl: "http://jenkins.jenkins.svc.cluster.local:8080/job/Final-Project/13/"
+    runUrl: "job/Final-Project/13/"
+  labels:
+    jenkins/jenkins-jenkins-agent: "true"
+    jenkins/label-digest: "b0fa0f6155f43e00d6e35bac898424622013e7d8"
+    jenkins/label: "Final-Project_13-1n187"
+    kubernetes.jenkins.io/controller: "http___jenkins_jenkins_svc_cluster_local_8080x"
+  name: "final-project-13-1n187-lmjzw-3lw41"
+  namespace: "jenkins"
+spec:
+  containers:
+  - command:
+    - "cat"
+    image: "gcr.io/kaniko-project/executor:debug"
+    name: "kaniko"
+    tty: true
+    volumeMounts:
+    - mountPath: "/kaniko/.docker"
+      name: "docker-config"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "alpine/k8s:1.30.0"
+    name: "kubectl"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - env:
+    - name: "JENKINS_SECRET"
+      value: "********"
+    - name: "JENKINS_TUNNEL"
+      value: "jenkins-agent.jenkins.svc.cluster.local:50000"
+    - name: "JENKINS_AGENT_NAME"
+      value: "final-project-13-1n187-lmjzw-3lw41"
+    - name: "REMOTING_OPTS"
+      value: "-noReconnectAfter 1d"
+    - name: "JENKINS_NAME"
+      value: "final-project-13-1n187-lmjzw-3lw41"
+    - name: "JENKINS_AGENT_WORKDIR"
+      value: "/home/jenkins/agent"
+    - name: "JENKINS_URL"
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+    image: "jenkins/inbound-agent:3355.v388858a_47b_33-3-jdk21"
+    name: "jnlp"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  nodeSelector:
+    kubernetes.io/os: "linux"
+  restartPolicy: "Never"
+  volumes:
+  - name: "docker-config"
+    secret:
+      secretName: "dockerhub-secret"
+  - emptyDir:
+      medium: ""
+    name: "workspace-volume"
+
+Running on final-project-13-1n187-lmjzw-3lw41 in /home/jenkins/agent/workspace/Final-Project
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/OhWreckedcom10/Final-Project.git
+ > git init /home/jenkins/agent/workspace/Final-Project # timeout=10
+Fetching upstream changes from https://github.com/OhWreckedcom10/Final-Project.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/OhWreckedcom10/Final-Project.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/OhWreckedcom10/Final-Project.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+Checking out Revision 938e45a0bc112cbdea12bd45822e2b8e2daa5f5e (refs/remotes/origin/main)
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 938e45a0bc112cbdea12bd45822e2b8e2daa5f5e # timeout=10
+Commit message: "Fix NodePort conflict"
+ > git rev-list --no-walk b9059be4127fc89622d855047d6bd589a48d734c # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Build and Push Docker Image)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ pwd
++ pwd
++ /kaniko/executor --context /home/jenkins/agent/workspace/Final-Project --dockerfile /home/jenkins/agent/workspace/Final-Project/Dockerfile --destination ohwrecked/final-project:13 --destination ohwrecked/final-project:latest
+[36mINFO[0m[0001] Retrieving image manifest python:3.12-slim   
+[36mINFO[0m[0001] Retrieving image python:3.12-slim from registry index.docker.io 
+[36mINFO[0m[0003] Built cross stage deps: map[]                
+[36mINFO[0m[0003] Retrieving image manifest python:3.12-slim   
+[36mINFO[0m[0003] Returning cached image manifest              
+[36mINFO[0m[0003] Executing 0 build triggers                   
+[36mINFO[0m[0003] Building stage 'python:3.12-slim' [idx: '0', base-idx: '-1'] 
+[36mINFO[0m[0003] Unpacking rootfs as cmd COPY app/app.py . requires it. 
+[36mINFO[0m[0005] WORKDIR /app                                 
+[36mINFO[0m[0005] Cmd: workdir                                 
+[36mINFO[0m[0005] Changed working directory to /app            
+[36mINFO[0m[0005] Creating directory /app with uid -1 and gid -1 
+[36mINFO[0m[0005] Taking snapshot of files...                  
+[36mINFO[0m[0005] COPY app/app.py .                            
+[36mINFO[0m[0005] Taking snapshot of files...                  
+[36mINFO[0m[0005] RUN pip install flask                        
+[36mINFO[0m[0005] Initializing snapshotter ...                 
+[36mINFO[0m[0005] Taking snapshot of full filesystem...        
+[36mINFO[0m[0005] Cmd: /bin/sh                                 
+[36mINFO[0m[0005] Args: [-c pip install flask]                 
+[36mINFO[0m[0005] Running: [/bin/sh -c pip install flask]      
+Collecting flask
+  Downloading flask-3.1.3-py3-none-any.whl.metadata (3.2 kB)
+Collecting blinker>=1.9.0 (from flask)
+  Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+Collecting click>=8.1.3 (from flask)
+  Downloading click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+Collecting itsdangerous>=2.2.0 (from flask)
+  Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+Collecting jinja2>=3.1.2 (from flask)
+  Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting markupsafe>=2.1.1 (from flask)
+  Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Collecting werkzeug>=3.1.0 (from flask)
+  Downloading werkzeug-3.1.8-py3-none-any.whl.metadata (4.0 kB)
+Downloading flask-3.1.3-py3-none-any.whl (103 kB)
+Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+Downloading click-8.4.1-py3-none-any.whl (116 kB)
+Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Downloading werkzeug-3.1.8-py3-none-any.whl (226 kB)
+Installing collected packages: markupsafe, itsdangerous, click, blinker, werkzeug, jinja2, flask
+Successfully installed blinker-1.9.0 click-8.4.1 flask-3.1.3 itsdangerous-2.2.0 jinja2-3.1.6 markupsafe-3.0.3 werkzeug-3.1.8
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 25.0.1 -> 26.1.2
+[notice] To update, run: pip install --upgrade pip
+[36mINFO[0m[0009] Taking snapshot of full filesystem...        
+[36mINFO[0m[0009] EXPOSE 5000                                  
+[36mINFO[0m[0009] Cmd: EXPOSE                                  
+[36mINFO[0m[0009] Adding exposed port: 5000/tcp                
+[36mINFO[0m[0009] CMD ["python", "app.py"]                     
+[36mINFO[0m[0009] Pushing image to ohwrecked/final-project:13  
+[36mINFO[0m[0016] Pushed index.docker.io/ohwrecked/final-project@sha256:e24f5c9d5d62e4fd38bb69187bfa53be43be0be9bf4e0f343c67a3a38218d03f 
+[36mINFO[0m[0016] Pushing image to ohwrecked/final-project:latest 
+[36mINFO[0m[0019] Pushed index.docker.io/ohwrecked/final-project@sha256:e24f5c9d5d62e4fd38bb69187bfa53be43be0be9bf4e0f343c67a3a38218d03f 
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy to Kubernetes)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ kubectl apply -f k8s/deployment.yaml
+deployment.apps/final-project unchanged
++ kubectl apply -f k8s/service.yaml
+service/final-project-service created
++ kubectl set image deployment/final-project 'final-project=ohwrecked/final-project:13'
+deployment.apps/final-project image updated
++ kubectl rollout status deployment/final-project
+Waiting for deployment "final-project" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "final-project" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "final-project" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "final-project" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "final-project" rollout to finish: 1 old replicas are pending termination...
+deployment "final-project" successfully rolled out
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+Pipeline completed successfully!
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // podTemplate
+[Pipeline] End of Pipeline
+Finished: SUCCESS
