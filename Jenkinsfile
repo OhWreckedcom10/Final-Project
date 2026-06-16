@@ -18,6 +18,9 @@ spec:
     - name: kubectl
       image: bitnami/kubectl:latest
       command:
+        - /bin/sh
+        - -c
+        - sleep 3600
         - cat
       tty: true
 
@@ -52,7 +55,9 @@ spec:
         stage('Deploy') {
             steps {
                 container('kubectl') {
-                    sh 'kubectl version --client'
+                    sh '''
+                    kubectl version --client
+                    '''
                 }
             }
         }
