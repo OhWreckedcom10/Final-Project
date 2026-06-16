@@ -14,6 +14,13 @@ spec:
     volumeMounts:
     - name: docker-config
       mountPath: /kaniko/.docker
+
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command:
+    - cat
+    tty: true
+
   volumes:
   - name: docker-config
     secret:
@@ -60,16 +67,18 @@ spec:
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                kubectl apply -f k8s/deployment.yaml
-                kubectl apply -f k8s/service.yaml
+                container('kubectl') {
+                    sh '''
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
 
-                kubectl set image deployment/$K8S_DEPLOYMENT \
-                $K8S_CONTAINER=$DOCKER_IMAGE:$IMAGE_TAG \
-                -n $K8S_NAMESPACE
+                    kubectl set image deployment/$K8S_DEPLOYMENT \
+                    $K8S_CONTAINER=$DOCKER_IMAGE:$IMAGE_TAG \
+                    -n $K8S_NAMESPACE
 
-                kubectl rollout status deployment/$K8S_DEPLOYMENT -n $K8S_NAMESPACE
-                '''
+                    kubectl rollout status deployment/$K8S_DEPLOYMENT -n $K8S_NAMESPACE
+                    '''
+                }
             }
         }
     }
