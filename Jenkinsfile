@@ -1,5 +1,26 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: docker-config
+      mountPath: /kaniko/.docker
+  volumes:
+  - name: docker-config
+    secret:
+      secretName: dockerhub-secret
+"""
+        }
+    }
 
     environment {
         DOCKER_IMAGE = "ohwrecked/final-project"
@@ -10,7 +31,6 @@ pipeline {
     }
 
     stages {
-
         stage('Clone GitHub Repository') {
             steps {
                 git branch: 'main',
@@ -20,41 +40,19 @@ pipeline {
 
         stage('Build Application') {
             steps {
-                sh '''
-                echo "Building application..."
-                
-                if [ -f requirements.txt ]; then
-                    pip install -r requirements.txt
-                fi
-                '''
+                echo "Python Flask app - no build step required"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build and Push Docker Image') {
             steps {
-                sh '''
-                docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
-                docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
-                '''
-            }
-        }
-
-        stage('Push Image to Docker Hub') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
+                container('kaniko') {
                     sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-
-                    docker push $DOCKER_IMAGE:$IMAGE_TAG
-                    docker push $DOCKER_IMAGE:latest
-
-                    docker logout
+                    /kaniko/executor \
+                      --context `pwd` \
+                      --dockerfile `pwd`/Dockerfile \
+                      --destination $DOCKER_IMAGE:$IMAGE_TAG \
+                      --destination $DOCKER_IMAGE:latest
                     '''
                 }
             }
@@ -70,8 +68,7 @@ pipeline {
                 $K8S_CONTAINER=$DOCKER_IMAGE:$IMAGE_TAG \
                 -n $K8S_NAMESPACE
 
-                kubectl rollout status deployment/$K8S_DEPLOYMENT \
-                -n $K8S_NAMESPACE
+                kubectl rollout status deployment/$K8S_DEPLOYMENT -n $K8S_NAMESPACE
                 '''
             }
         }
@@ -81,7 +78,6 @@ pipeline {
         success {
             echo "Pipeline completed successfully!"
         }
-
         failure {
             echo "Pipeline failed!"
         }
