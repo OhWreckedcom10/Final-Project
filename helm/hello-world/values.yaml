@@ -1,0 +1,34 @@
+replicaCount: 2
+
+image:
+  repository: ohwrecked/final-project
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 5000
+  nodePort: 30081
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  cpuUtilization: 70
+
+rollout:
+  steps:
+    - setWeight: 20
+    - pause: { duration: 30s }
+    - setWeight: 50
+    - pause: { duration: 30s }
+    - setWeight: 100
