@@ -16,11 +16,8 @@ spec:
           mountPath: /kaniko/.docker
 
     - name: kubectl
-      image: bitnami/kubectl:latest
+      image: alpine/k8s:1.30.0
       command:
-        - /bin/sh
-        - -c
-        - sleep 3600
         - cat
       tty: true
 
