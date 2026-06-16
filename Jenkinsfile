@@ -46,6 +46,7 @@ spec:
                 container('kaniko') {
                     sh '''
                     /kaniko/executor \
+                      --cache=false \
                       --context `pwd` \
                       --dockerfile `pwd`/Dockerfile \
                       --destination $DOCKER_IMAGE:$IMAGE_TAG \
@@ -60,8 +61,9 @@ spec:
             steps {
                 container('trivy') {
                     sh '''
-                    trivy image \
-                      --input image.tar \
+                    trivy image --input image.tar \
+                      --scanners vuln \
+                      --pkg-types library \
                       --severity CRITICAL \
                       --exit-code 1 \
                       --no-progress
@@ -75,6 +77,7 @@ spec:
                 container('kaniko') {
                     sh '''
                     /kaniko/executor \
+                      --cache=false \
                       --context `pwd` \
                       --dockerfile `pwd`/Dockerfile \
                       --destination $DOCKER_IMAGE:$IMAGE_TAG \
@@ -92,9 +95,10 @@ spec:
                     kubectl apply -f k8s/service.yaml
 
                     kubectl set image deployment/final-project \
-                    final-project=$DOCKER_IMAGE:$IMAGE_TAG
+                    final-project=$DOCKER_IMAGE:$IMAGE_TAG \
+                    -n jenkins
 
-                    kubectl rollout status deployment/final-project
+                    kubectl rollout status deployment/final-project -n jenkins
                     '''
                 }
             }
