@@ -1,62 +1,40 @@
 pipeline {
     agent {
         kubernetes {
-            yaml """
+            yaml '''
 apiVersion: v1
 kind: Pod
 spec:
   containers:
-- name: kaniko
-  image: gcr.io/kaniko-project/executor:debug
-  command:
-  - /busybox/sh
-  args:
-  - -c
-  - sleep 99d
-  tty: true
-    volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:debug
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
 
-- name: kubectl
-  image: bitnami/kubectl:latest
-  command:
-  - /bin/sh
-  args:
-  - -c
-  - sleep 99d
-  tty: true
+    - name: kubectl
+      image: bitnami/kubectl:latest
+      command:
+        - cat
+      tty: true
 
   volumes:
-  - name: docker-config
-    secret:
-      secretName: dockerhub-secret
-"""
+    - name: docker-config
+      secret:
+        secretName: dockerhub-secret
+'''
         }
     }
 
     environment {
         DOCKER_IMAGE = "ohwrecked/final-project"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        K8S_DEPLOYMENT = "final-project"
-        K8S_CONTAINER = "final-project"
-        K8S_NAMESPACE = "default"
     }
 
     stages {
-        stage('Clone GitHub Repository') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/OhWreckedcom10/Final-Project.git'
-            }
-        }
-
-        stage('Build Application') {
-            steps {
-                echo "Python Flask app - no build step required"
-            }
-        }
-
         stage('Build and Push Docker Image') {
             steps {
                 container('kaniko') {
@@ -71,30 +49,12 @@ spec:
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy') {
             steps {
                 container('kubectl') {
-                    sh '''
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-
-                    kubectl set image deployment/$K8S_DEPLOYMENT \
-                    $K8S_CONTAINER=$DOCKER_IMAGE:$IMAGE_TAG \
-                    -n $K8S_NAMESPACE
-
-                    kubectl rollout status deployment/$K8S_DEPLOYMENT -n $K8S_NAMESPACE
-                    '''
+                    sh 'kubectl version --client'
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline completed successfully!"
-        }
-        failure {
-            echo "Pipeline failed!"
         }
     }
 }
