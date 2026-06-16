@@ -49,14 +49,29 @@ spec:
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Kubernetes') {
             steps {
                 container('kubectl') {
                     sh '''
-                    kubectl version --client
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
+
+                    kubectl set image deployment/final-project \
+                    final-project=$DOCKER_IMAGE:$IMAGE_TAG
+
+                    kubectl rollout status deployment/final-project
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed!"
         }
     }
 }
