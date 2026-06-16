@@ -1,10 +1,10 @@
-FROM python:3.12-slim
+FROM python:3.11-alpine
 
 WORKDIR /app
 
 COPY app/app.py .
 
-RUN pip install flask
+RUN pip install --no-cache-dir flask
 
 EXPOSE 5000
 
