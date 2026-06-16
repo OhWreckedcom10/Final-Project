@@ -15,6 +15,12 @@ spec:
         - name: docker-config
           mountPath: /kaniko/.docker
 
+    - name: trivy
+      image: aquasec/trivy:latest
+      command:
+        - cat
+      tty: true
+
     - name: kubectl
       image: alpine/k8s:1.30.0
       command:
@@ -35,7 +41,36 @@ spec:
     }
 
     stages {
-        stage('Build and Push Docker Image') {
+        stage('Build Docker Image for Scan') {
+            steps {
+                container('kaniko') {
+                    sh '''
+                    /kaniko/executor \
+                      --context `pwd` \
+                      --dockerfile `pwd`/Dockerfile \
+                      --destination $DOCKER_IMAGE:$IMAGE_TAG \
+                      --no-push \
+                      --tarPath image.tar
+                    '''
+                }
+            }
+        }
+
+        stage('Security Scan with Trivy') {
+            steps {
+                container('trivy') {
+                    sh '''
+                    trivy image \
+                      --input image.tar \
+                      --severity CRITICAL \
+                      --exit-code 1 \
+                      --no-progress
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
             steps {
                 container('kaniko') {
                     sh '''
