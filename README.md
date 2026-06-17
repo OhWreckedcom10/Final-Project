@@ -80,6 +80,9 @@ Final-Project
 │   │   ├── Pipeline Console Output.txt
 │   │   └── Pipeline Success.png
 │   │
+│   ├── k8s status/
+│   │   └── cluster-status.txt
+│   │
 │   └── mandatory/
 │       ├── Pipeline Console Output.txt
 │       └── Pipeline Success.png
@@ -116,6 +119,12 @@ The complete project is stored in GitHub and includes:
 * Helm chart
 * Environment configurations
 * Documentation
+
+Repository:
+
+```text
+https://github.com/OhWreckedcom10/Final-Project
+```
 
 ---
 
@@ -173,16 +182,28 @@ ohwrecked/final-project
 
 ## Kubernetes Deployment
 
-The application is deployed into Kubernetes using Helm and Argo Rollouts.
+The project contains standard Kubernetes manifests under:
+
+```text
+k8s/
+```
+
+Files:
+
+```text
+deployment.yaml
+service.yaml
+```
+
+The final deployment solution uses Helm and Argo Rollouts for progressive delivery.
 
 The deployment includes:
 
 * Multiple replicas
 * Resource requests
 * Resource limits
-* Canary deployment strategy
-* Horizontal Pod Autoscaler
-* Environment-specific configurations
+* Kubernetes Services
+* Environment separation through namespaces
 
 ---
 
@@ -245,20 +266,12 @@ stage
 prod
 ```
 
-Each environment uses a dedicated values file and may define different:
+Each environment uses a dedicated values file and defines:
 
 * Replica counts
-* Resource limits
 * Resource requests
-* Image tags
-
-Final deployment status:
-
-```text
-DEV   : 2 replicas available
-STAGE : 2 replicas available
-PROD  : 2 replicas available
-```
+* Resource limits
+* Image configuration
 
 The environments are promoted through the Jenkins pipeline using manual approval gates.
 
@@ -302,9 +315,9 @@ The rollout performs progressive deployment using multiple rollout stages.
 
 Example rollout strategy:
 
-* 20% traffic
-* 50% traffic
-* 100% traffic
+* 20% traffic shift
+* 50% traffic shift
+* 100% traffic shift
 
 Rollouts were successfully deployed and verified in:
 
@@ -333,6 +346,31 @@ HPAs were successfully deployed in:
 * PROD
 
 environments.
+
+---
+
+# Final Deployment State
+
+After successful pipeline execution, the application was deployed into three Kubernetes environments.
+
+| Environment | Namespace | Rollout | HPA | Pods |
+|------------|-----------|---------|-----|------|
+| DEV | dev | Enabled | Enabled | Running |
+| STAGE | stage | Enabled | Enabled | Running |
+| PROD | prod | Enabled | Enabled | Running |
+
+Each environment contains:
+
+* Argo Rollout resource
+* Kubernetes Service
+* Horizontal Pod Autoscaler
+* Running application Pods
+
+Deployment status was validated using Kubernetes commands and stored in:
+
+```text
+results/k8s status/cluster-status.txt
+```
 
 ---
 
@@ -404,39 +442,92 @@ Throughout the project, Kubernetes logs, Jenkins console output, Helm validation
 
 # Results
 
-The repository includes evidence of successful execution.
+The repository contains evidence demonstrating successful completion of the project requirements.
+
+## Mandatory Requirements
 
 Location:
 
 ```text
-results/
-├── mandatory/
-│   ├── Pipeline Console Output.txt
-│   └── Pipeline Success.png
-│
-└── advanced/
-    ├── Pipeline Console Output.txt
-    └── Pipeline Success.png
+results/mandatory/
 ```
 
-The evidence demonstrates successful completion of both mandatory and advanced requirements.
+Contains:
 
-Mandatory Requirements:
+* Pipeline Success Screenshot
+* Pipeline Console Output
 
-* Jenkins pipeline execution
-* Docker image build
-* Docker Hub image push
-* Kubernetes deployment
+These files demonstrate successful completion of the mandatory CI/CD requirements.
 
-Advanced Requirements:
+---
 
-* Trivy security scanning
-* Helm packaging and deployment
-* DEV/STAGE/PROD environment deployment
-* Manual promotion gates
-* Argo Rollouts Canary deployment
-* Horizontal Pod Autoscaler deployment
+## Advanced Requirements
 
-The final solution successfully deployed the application into DEV, STAGE, and PROD Kubernetes environments with healthy running pods, available replicas, active rollouts, and deployed HPAs in all environments.
+Location:
+
+```text
+results/advanced/
+```
+
+Contains:
+
+* Pipeline Success Screenshot
+* Pipeline Console Output
+
+These files demonstrate successful completion of the advanced CI/CD and GitOps requirements.
+
+---
+
+## Kubernetes Environment Status
+
+Location:
+
+```text
+results/k8s status/
+```
+
+Contains:
+
+* cluster-status.txt
+
+This file contains the final Kubernetes deployment status after pipeline execution, including:
+
+* DEV environment resources
+* STAGE environment resources
+* PROD environment resources
+* Argo Rollouts
+* Running Pods
+* Services
+* Horizontal Pod Autoscalers
+
+The status output verifies that all environments were deployed successfully and were running with healthy replicas.
+
+---
+
+# Architecture
+
+```text
+GitHub
+   │
+   ▼
+Jenkins CI/CD
+   │
+   ├── Kaniko Build
+   ├── Trivy Security Scan
+   └── Docker Hub Push
+   │
+   ▼
+Helm Deployment
+   │
+   ├──────────────┬──────────────┬──────────────┐
+   ▼              ▼              ▼
+ DEV           STAGE           PROD
+   │              │              │
+   ▼              ▼              ▼
+Rollout       Rollout        Rollout
+HPA           HPA            HPA
+Service       Service        Service
+Pods          Pods           Pods
+```
 
 ---
