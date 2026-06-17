@@ -41,7 +41,6 @@ spec:
     }
 
     stages {
-
         stage('Build and Push Docker Image') {
             steps {
                 container('kaniko') {
@@ -72,18 +71,58 @@ spec:
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy DEV') {
             steps {
                 container('kubectl') {
                     sh '''
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
+                    helm upgrade --install hello-world-dev \
+                      helm/hello-world \
+                      -f environments/dev/values.yaml \
+                      -n dev --create-namespace
+                    '''
+                }
+            }
+        }
 
-                    kubectl set image deployment/final-project \
-                      final-project=$DOCKER_IMAGE:$IMAGE_TAG \
-                      -n jenkins
+        stage('Approve Promotion To STAGE') {
+            steps {
+                input(
+                    message: 'DEV deployment completed successfully. Promote to STAGE?',
+                    ok: 'Deploy STAGE'
+                )
+            }
+        }
 
-                    kubectl rollout status deployment/final-project -n jenkins
+        stage('Deploy STAGE') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                    helm upgrade --install hello-world-stage \
+                      helm/hello-world \
+                      -f environments/stage/values.yaml \
+                      -n stage --create-namespace
+                    '''
+                }
+            }
+        }
+
+        stage('Approve Promotion To PROD') {
+            steps {
+                input(
+                    message: 'STAGE deployment completed successfully. Promote to PROD?',
+                    ok: 'Deploy PROD'
+                )
+            }
+        }
+
+        stage('Deploy PROD') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                    helm upgrade --install hello-world-prod \
+                      helm/hello-world \
+                      -f environments/prod/values.yaml \
+                      -n prod --create-namespace
                     '''
                 }
             }
