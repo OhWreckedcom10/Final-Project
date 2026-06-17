@@ -8,7 +8,7 @@ Eshed Porat
 
 # Project Overview
 
-This project demonstrates a complete DevOps workflow for a containerized Flask application using CI/CD and GitOps principles.
+This project demonstrates a complete cloud-native CI/CD and GitOps workflow for a containerized Flask application running on Kubernetes.
 
 The application is a simple Flask web server that displays:
 
@@ -16,25 +16,33 @@ The application is a simple Flask web server that displays:
 Hello World
 ```
 
-The project includes:
+The solution implements:
 
-* Jenkins CI/CD Pipeline
-* Docker Containerization
-* Docker Hub Integration
-* Kubernetes Deployment
-* Trivy Security Scanning
-* Helm Chart Packaging
-* Argo CD GitOps Configuration
-* Multi-Environment Configuration (Dev, Stage, Prod)
-* Argo Rollouts Canary Deployment
+* Jenkins running inside Kubernetes
+* Docker image builds using Kaniko
+* Docker Hub image registry integration
+* Trivy vulnerability scanning
+* Helm-based application packaging
+* Multi-environment deployments (DEV, STAGE, PROD)
+* Manual promotion gates between environments
+* Argo Rollouts Canary deployments
 * Horizontal Pod Autoscaler (HPA)
+* GitOps-ready Argo CD application definitions
+
+At the end of the project, the application is successfully deployed and running in three independent Kubernetes environments:
+
+* DEV
+* STAGE
+* PROD
+
+using Helm, Argo Rollouts, and Jenkins-driven CI/CD automation.
 
 ---
 
 # Repository Structure
 
 ```text
-HIV
+Final-Project
 ├── app/
 │   ├── app.py
 │   └── requirements
@@ -105,18 +113,31 @@ The complete project is stored in GitHub and includes:
 * Dockerfile
 * Jenkinsfile
 * Kubernetes manifests
+* Helm chart
+* Environment configurations
 * Documentation
 
 ---
 
 ## Jenkins CI/CD Pipeline
 
-The Jenkins pipeline performs:
+The Jenkins pipeline is executed inside Kubernetes using dynamic Jenkins agent pods.
 
-1. Clone repository from GitHub
-2. Build Docker image
+Pipeline stages:
+
+1. Checkout source code from GitHub
+2. Build Docker image using Kaniko
 3. Push image to Docker Hub
-4. Deploy application to Kubernetes
+4. Perform Trivy security scanning
+5. Deploy to DEV environment
+6. Manual approval gate
+7. Deploy to STAGE environment
+8. Manual approval gate
+9. Deploy to PROD environment
+
+The deployment stages use Helm charts and environment-specific values files.
+
+The pipeline only proceeds to the next environment after successful deployment and manual approval.
 
 Pipeline definition:
 
@@ -142,36 +163,26 @@ Docker run example:
 docker run -p 5000:5000 ohwrecked/final-project
 ```
 
+Docker Hub repository:
+
+```text
+ohwrecked/final-project
+```
+
 ---
 
 ## Kubernetes Deployment
 
-Kubernetes manifests are located in:
-
-```text
-k8s/
-```
-
-Files:
-
-```text
-deployment.yaml
-service.yaml
-```
+The application is deployed into Kubernetes using Helm and Argo Rollouts.
 
 The deployment includes:
 
 * Multiple replicas
 * Resource requests
 * Resource limits
-* Service exposure through Kubernetes
-
-Deploy manually:
-
-```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-```
+* Canary deployment strategy
+* Horizontal Pod Autoscaler
+* Environment-specific configurations
 
 ---
 
@@ -182,6 +193,8 @@ kubectl apply -f k8s/service.yaml
 The Jenkins pipeline performs container security scanning using Trivy before deployment.
 
 The scan is configured to fail the pipeline when CRITICAL application vulnerabilities are detected.
+
+Security scanning is performed automatically before deployment to any environment.
 
 ---
 
@@ -203,7 +216,7 @@ values.yaml
 templates/
 ```
 
-Deploy example:
+Deployment example:
 
 ```bash
 helm upgrade --install hello-world-dev \
@@ -224,12 +237,30 @@ environments/stage
 environments/prod
 ```
 
-Each environment uses its own:
+The application is deployed into three independent Kubernetes namespaces:
 
-* values.yaml
-* replica configuration
-* resource configuration
-* image configuration
+```text
+dev
+stage
+prod
+```
+
+Each environment uses a dedicated values file and may define different:
+
+* Replica counts
+* Resource limits
+* Resource requests
+* Image tags
+
+Final deployment status:
+
+```text
+DEV   : 2 replicas available
+STAGE : 2 replicas available
+PROD  : 2 replicas available
+```
+
+The environments are promoted through the Jenkins pipeline using manual approval gates.
 
 ---
 
@@ -255,7 +286,7 @@ The repository also contains:
 argocd/app-of-apps.yaml
 ```
 
-which implements the App-of-Apps pattern.
+which implements the App-of-Apps pattern for GitOps deployments.
 
 ---
 
@@ -269,6 +300,20 @@ helm/hello-world/templates/rollout.yaml
 
 The rollout performs progressive deployment using multiple rollout stages.
 
+Example rollout strategy:
+
+* 20% traffic
+* 50% traffic
+* 100% traffic
+
+Rollouts were successfully deployed and verified in:
+
+* DEV
+* STAGE
+* PROD
+
+environments.
+
 ---
 
 ## Horizontal Pod Autoscaler
@@ -279,7 +324,15 @@ The HPA configuration is defined in:
 helm/hello-world/templates/hpa.yaml
 ```
 
-This enables automatic scaling of the application based on resource utilization.
+This enables automatic scaling of the application based on CPU utilization.
+
+HPAs were successfully deployed in:
+
+* DEV
+* STAGE
+* PROD
+
+environments.
 
 ---
 
@@ -298,14 +351,9 @@ cd Final-Project
 docker build -t ohwrecked/final-project .
 ```
 
-## Deploy Kubernetes Resources
+## Deploy Using Helm
 
-```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-```
-
-## Deploy Helm Chart
+DEV:
 
 ```bash
 helm upgrade --install hello-world-dev \
@@ -314,25 +362,43 @@ helm upgrade --install hello-world-dev \
   -n dev --create-namespace
 ```
 
+STAGE:
+
+```bash
+helm upgrade --install hello-world-stage \
+  helm/hello-world \
+  -f environments/stage/values.yaml \
+  -n stage --create-namespace
+```
+
+PROD:
+
+```bash
+helm upgrade --install hello-world-prod \
+  helm/hello-world \
+  -f environments/prod/values.yaml \
+  -n prod --create-namespace
+```
+
 ---
 
 # Challenges Encountered During Implementation
 
 During the implementation of the project, several technical challenges were encountered and resolved.
 
-The first challenge was deploying Jenkins inside Kubernetes. The Jenkins controller initially failed to start due to image download delays and initialization issues. Additional troubleshooting was required to verify pod status, container logs, and Helm deployment configuration before Jenkins became fully operational.
+The first challenge was deploying Jenkins inside Kubernetes. Jenkins was initially unavailable after cluster reconfiguration and had to be reinstalled and reconfigured. Additional troubleshooting was required to restore agent connectivity, Kubernetes integration, and Docker Hub authentication.
 
 A second challenge involved building Docker images from within Jenkins running inside Kubernetes. Since Docker was not available inside the Jenkins agent containers, the solution was migrated to Kaniko, which allows container image builds without requiring a Docker daemon.
 
-Authentication with Docker Hub also required additional configuration. Jenkins was initially unable to push images because the Docker Hub credentials were not correctly mounted inside the build container. This was resolved by creating and mounting a Kubernetes Docker registry secret.
+Authentication with Docker Hub also required additional configuration. Jenkins was initially unable to push images because the Docker Hub credentials and Kubernetes secrets were not correctly configured. This was resolved by creating and mounting Docker registry secrets that Kaniko could consume during image builds.
 
-Several deployment issues were encountered during Kubernetes rollouts. New application versions occasionally failed to start correctly, causing deployments to exceed their rollout deadlines. Investigation of pod logs revealed application dependency issues, including missing Flask packages inside generated container images. The Dockerfile and build process were updated until the image was built consistently.
+Several deployment issues were encountered during Kubernetes rollouts. New application versions occasionally failed to start correctly, causing deployments to exceed their rollout deadlines. Investigation of pod logs revealed application dependency issues, including missing Flask packages inside generated container images. The Dockerfile and build process were updated until the image was built consistently and deployed successfully.
 
-Security scanning with Trivy introduced another challenge. Initial scans failed because the selected base images contained multiple CRITICAL operating system vulnerabilities. Different base images were evaluated and the Trivy configuration was adjusted to focus on application dependency vulnerabilities, allowing meaningful security validation while maintaining a successful pipeline.
+Security scanning with Trivy introduced another challenge. Initial scans failed because the selected base images contained multiple CRITICAL operating system vulnerabilities. Different base images were evaluated and the Trivy configuration was adjusted to focus on application dependency vulnerabilities while still enforcing security controls in the CI/CD pipeline.
 
-Additional troubleshooting was required when deploying Helm releases. Some releases entered a failed state due to Kubernetes service conflicts and previously existing resources. These issues were resolved by cleaning failed releases and validating Helm templates before deployment.
+Additional troubleshooting was required when deploying Helm releases. Some releases entered a failed state due to namespace conflicts, missing permissions, service conflicts, and missing Argo Rollouts controllers after namespace cleanup. RBAC permissions were updated, controllers were reinstalled, and Helm releases were redeployed until all environments became healthy.
 
-Throughout the project, Kubernetes logs, Jenkins console output, Helm validation commands, and Docker image inspection tools were heavily used to identify and resolve issues. These troubleshooting activities provided valuable hands-on experience with CI/CD pipelines, containerization, Kubernetes operations, GitOps workflows, and progressive delivery techniques.
+Throughout the project, Kubernetes logs, Jenkins console output, Helm validation commands, Docker image inspection, rollout monitoring, and Trivy scan results were used extensively to identify and resolve issues. These troubleshooting activities provided valuable hands-on experience with CI/CD pipelines, Kubernetes operations, GitOps workflows, progressive delivery, container security, and multi-environment deployment strategies.
 
 ---
 
@@ -340,32 +406,37 @@ Throughout the project, Kubernetes logs, Jenkins console output, Helm validation
 
 The repository includes evidence of successful execution.
 
-## Mandatory Requirements
-
 Location:
 
 ```text
-results/mandatory/
+results/
+├── mandatory/
+│   ├── Pipeline Console Output.txt
+│   └── Pipeline Success.png
+│
+└── advanced/
+    ├── Pipeline Console Output.txt
+    └── Pipeline Success.png
 ```
 
-Contains:
+The evidence demonstrates successful completion of both mandatory and advanced requirements.
 
-* Pipeline Success Screenshot
-* Pipeline Console Output
+Mandatory Requirements:
 
-## Advanced Requirements
+* Jenkins pipeline execution
+* Docker image build
+* Docker Hub image push
+* Kubernetes deployment
 
-Location:
+Advanced Requirements:
 
-```text
-results/advanced/
-```
+* Trivy security scanning
+* Helm packaging and deployment
+* DEV/STAGE/PROD environment deployment
+* Manual promotion gates
+* Argo Rollouts Canary deployment
+* Horizontal Pod Autoscaler deployment
 
-Contains:
-
-* Pipeline Success Screenshot
-* Pipeline Console Output
-
-These files demonstrate successful completion of both the mandatory and advanced pipeline implementations.
+The final solution successfully deployed the application into DEV, STAGE, and PROD Kubernetes environments with healthy running pods, available replicas, active rollouts, and deployed HPAs in all environments.
 
 ---
