@@ -1,0 +1,83 @@
+=========================================
+     KUBERNETES PROJECT STATUS
+=========================================
+
+=========================================
+            ROLLOUTS
+=========================================
+NAMESPACE   NAME                DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+dev         hello-world-dev     2         2         2            2           30m
+prod        hello-world-prod    2         2         2            2           28m
+stage       hello-world-stage   2         2         2            2           29m
+
+=========================================
+              PODS
+=========================================
+NAMESPACE       NAME                                      READY   STATUS      RESTARTS       AGE
+argo-rollouts   argo-rollouts-5f64f8d68-p9nm7             1/1     Running     0              25m
+dev             hello-world-dev-cc97696b6-9r8l2           1/1     Running     0              25m
+dev             hello-world-dev-cc97696b6-jvdhx           1/1     Running     0              25m
+jenkins         jenkins-0                                 2/2     Running     0              57m
+kube-system     coredns-c4dbffb5f-84v6f                   1/1     Running     10 (63m ago)   41d
+kube-system     helm-install-traefik-254q5                0/1     Completed   1              41d
+kube-system     helm-install-traefik-crd-qzmpr            0/1     Completed   0              41d
+kube-system     local-path-provisioner-5c4dc5d66d-hh9s7   1/1     Running     4 (65m ago)    41d
+kube-system     metrics-server-5b7b5d6768-vrq72           1/1     Running     1 (63m ago)    65m
+kube-system     svclb-traefik-a3ef10c9-9tq4n              2/2     Running     8 (65m ago)    41d
+kube-system     traefik-9bcdbbd9-fs8qw                    1/1     Running     15 (62m ago)   41d
+prod            hello-world-prod-647c89bfd5-khjbs         1/1     Running     0              24m
+prod            hello-world-prod-647c89bfd5-r7gzh         1/1     Running     0              24m
+stage           hello-world-stage-7859f8bd74-dt2pt        1/1     Running     0              24m
+stage           hello-world-stage-7859f8bd74-t5xkk        1/1     Running     0              24m
+
+=========================================
+            SERVICES
+=========================================
+NAMESPACE       NAME                        TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)                      AGE
+argo-rollouts   argo-rollouts-metrics       ClusterIP      10.43.225.255   <none>           8090/TCP                     25m
+default         kubernetes                  ClusterIP      10.43.0.1       <none>           443/TCP                      58m
+dev             hello-world-dev-service     NodePort       10.43.40.151    <none>           80:30081/TCP                 30m
+jenkins         jenkins                     NodePort       10.43.92.225    <none>           8080:32670/TCP               57m
+jenkins         jenkins-agent               ClusterIP      10.43.13.250    <none>           50000/TCP                    57m
+kube-system     kube-dns                    ClusterIP      10.43.0.10      <none>           53/UDP,53/TCP,9153/TCP       41d
+kube-system     metrics-server              ClusterIP      10.43.219.11    <none>           443/TCP                      41d
+kube-system     traefik                     LoadBalancer   10.43.136.167   192.168.77.131   80:31393/TCP,443:30378/TCP   41d
+prod            hello-world-prod-service    NodePort       10.43.184.13    <none>           80:30083/TCP                 28m
+stage           hello-world-stage-service   NodePort       10.43.221.189   <none>           80:30082/TCP                 29m
+
+=========================================
+               HPA
+=========================================
+NAMESPACE   NAME                    REFERENCE                   TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+dev         hello-world-dev-hpa     Rollout/hello-world-dev     cpu: 2%/70%   2         5         2          30m
+prod        hello-world-prod-hpa    Rollout/hello-world-prod    cpu: 0%/70%   2         5         2          28m
+stage       hello-world-stage-hpa   Rollout/hello-world-stage   cpu: 1%/70%   2         5         2          29m
+
+=========================================
+          ENVIRONMENT SUMMARY
+=========================================
+
+Namespace: dev
+rollout.argoproj.io/hello-world-dev   2     2     2     2     30m
+pod/hello-world-dev-cc97696b6-9r8l2   1/1   Running   0     25m
+pod/hello-world-dev-cc97696b6-jvdhx   1/1   Running   0     25m
+service/hello-world-dev-service   NodePort   10.43.40.151   <none>   80:30081/TCP   30m
+horizontalpodautoscaler.autoscaling/hello-world-dev-hpa   Rollout/hello-world-dev   cpu: 2%/70%   2     5     2     30m
+
+Namespace: stage
+rollout.argoproj.io/hello-world-stage   2     2     2     2     29m
+pod/hello-world-stage-7859f8bd74-dt2pt   1/1   Running   0     24m
+pod/hello-world-stage-7859f8bd74-t5xkk   1/1   Running   0     24m
+service/hello-world-stage-service   NodePort   10.43.221.189   <none>   80:30082/TCP   29m
+horizontalpodautoscaler.autoscaling/hello-world-stage-hpa   Rollout/hello-world-stage   cpu: 1%/70%   2     5     2     29m
+
+Namespace: prod
+rollout.argoproj.io/hello-world-prod   2     2     2     2     28m
+pod/hello-world-prod-647c89bfd5-khjbs   1/1   Running   0     24m
+pod/hello-world-prod-647c89bfd5-r7gzh   1/1   Running   0     24m
+service/hello-world-prod-service   NodePort   10.43.184.13   <none>   80:30083/TCP   28m
+horizontalpodautoscaler.autoscaling/hello-world-prod-hpa   Rollout/hello-world-prod   cpu: 0%/70%   2     5     2     28m
+
+=========================================
+             COMPLETED
+=========================================
