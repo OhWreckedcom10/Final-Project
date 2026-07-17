@@ -116,7 +116,9 @@ spec:
         stage('Checkout') {
             steps {
                 container('jnlp') {
-                    checkout scm
+                    retry(3){
+                        checkout scm
+                    }
 
                     script {
                         env.GIT_SHORT_SHA = sh(
