@@ -55,12 +55,12 @@ spec:
       tty: true
 
     - name: kubectl
-      image: registry.k8s.io/kubectl:v1.31.0
+      image: bitnami/kubectl:1.31.12
       command:
-        - /bin/sh
+        - /bin/bash
         - -c
       args:
-        - sleep 86400
+        - sleep infinity
       tty: true
       volumeMounts:
         - name: kubeconfig
