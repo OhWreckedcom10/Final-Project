@@ -107,6 +107,10 @@ spec:
                     retry(3) {
                         checkout scm
                     }
+                    
+                    sh '''
+                        git config --global --add safe.directory "${WORKSPACE}"
+                    '''
 
                     script {
                         env.GIT_COMMIT_SHORT = sh(
