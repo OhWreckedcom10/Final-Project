@@ -202,11 +202,12 @@ PYTHON_TEST
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -295,11 +296,12 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -334,11 +336,12 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -383,11 +386,12 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -425,11 +429,12 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -474,11 +479,12 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -539,11 +545,12 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
@@ -588,11 +595,12 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]) {
                         sh '''
                             set -eu
