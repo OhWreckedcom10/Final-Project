@@ -2,61 +2,66 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: final-project
-  namespace: prod
   labels:
     app: final-project
+    environment: prod
 spec:
-  replicas: 2
-  revisionHistoryLimit: 5
-
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+  replicas: 3
 
   selector:
     matchLabels:
       app: final-project
+      environment: prod
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
 
   template:
     metadata:
       labels:
         app: final-project
+        environment: prod
 
     spec:
       containers:
         - name: final-project
-          image: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:initial
-          imagePullPolicy: IfNotPresent
+          image: IMAGE_URI_PLACEHOLDER
+          imagePullPolicy: Always
 
           ports:
             - name: http
               containerPort: 5000
               protocol: TCP
 
+          env:
+            - name: APP_ENV
+              value: prod
+
           readinessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: http
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 2
+            timeoutSeconds: 3
             failureThreshold: 6
 
           livenessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 10
-            timeoutSeconds: 2
+            timeoutSeconds: 3
             failureThreshold: 3
 
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 250m
+              cpu: 200m
               memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
