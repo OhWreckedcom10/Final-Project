@@ -143,6 +143,10 @@ spec:
             steps {
                 container('python') {
                     sh '''
+                        pwd
+                        echo "Repository contents:"
+                        find . -maxdepth 3 -type f | sort
+                        
                         set -eu
 
                         echo "Python version:"
