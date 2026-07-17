@@ -4,14 +4,14 @@ metadata:
   name: final-project
   labels:
     app: final-project
-    environment: dev
+    environment: stage
 spec:
-  replicas: 1
+  replicas: 2
 
   selector:
     matchLabels:
       app: final-project
-      environment: dev
+      environment: stage
 
   strategy:
     type: RollingUpdate
@@ -23,7 +23,7 @@ spec:
     metadata:
       labels:
         app: final-project
-        environment: dev
+        environment: stage
 
     spec:
       containers:
@@ -38,7 +38,7 @@ spec:
 
           env:
             - name: APP_ENV
-              value: dev
+              value: stage
 
           readinessProbe:
             httpGet:
@@ -60,8 +60,8 @@ spec:
 
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
+              cpu: 100m
+              memory: 128Mi
             limits:
-              cpu: 250m
-              memory: 256Mi
+              cpu: 500m
+              memory: 512Mi

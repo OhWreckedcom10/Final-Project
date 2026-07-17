@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: final-project
+  labels:
+    app: final-project
+    environment: prod
+spec:
+  type: LoadBalancer
+
+  selector:
+    app: final-project
+    environment: prod
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
