@@ -74,7 +74,7 @@ spec:
 
     - name: trivy-cache
         persistentVolumeClaim:
-        claimName: trivy-cache-pvc
+            claimName: trivy-cache-pvc
 '''
         }
     }
