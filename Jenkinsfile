@@ -115,7 +115,6 @@ spec:
             unit: 'MINUTES'
         )
 
-        timestamps()
     }
 
     environment {
