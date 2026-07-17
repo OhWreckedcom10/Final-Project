@@ -175,7 +175,7 @@ PYTHON_TEST
                 container('tools') {
                     withCredentials([
                         usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
+                            credentialsId: "${aws-jenkins-credentials}",
                             usernameVariable: 'AWS_ACCESS_KEY_ID',
                             passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                         )
