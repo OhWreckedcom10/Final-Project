@@ -206,11 +206,10 @@ PYTHON_TEST
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -249,11 +248,10 @@ PYTHON_TEST
             steps {
                 container('terraform') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         dir("${TERRAFORM_DIRECTORY}") {
                             sh '''
@@ -278,11 +276,10 @@ PYTHON_TEST
             steps {
                 container('terraform') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         dir("${TERRAFORM_DIRECTORY}") {
                             script {
@@ -343,11 +340,10 @@ existing EKS, ECR, VPC and IAM resources.
             steps {
                 container('terraform') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         dir("${TERRAFORM_DIRECTORY}") {
                             script {
@@ -421,11 +417,10 @@ Terraform Apply will run.
             steps {
                 container('terraform') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         dir("${TERRAFORM_DIRECTORY}") {
                             sh '''
@@ -451,11 +446,10 @@ Terraform Apply will run.
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -544,11 +538,10 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -583,11 +576,10 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -630,11 +622,10 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -676,11 +667,10 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -723,11 +713,10 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -793,11 +782,10 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
@@ -840,11 +828,10 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         sh '''
                             set -eu
