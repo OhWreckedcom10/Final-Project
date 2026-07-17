@@ -175,11 +175,8 @@ PYTHON_TEST
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         sh '''
                             set -eu
@@ -205,11 +202,8 @@ PYTHON_TEST
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         sh '''
                             set -eu
@@ -242,11 +236,8 @@ PYTHON_TEST
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         sh '''
                             set -eu
@@ -337,11 +328,8 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         sh '''
                             set -eu
@@ -384,11 +372,8 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         script {
                             smokeTest('dev')
@@ -402,11 +387,8 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         sh '''
                             set -eu
@@ -449,11 +431,8 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         script {
                             smokeTest('stage')
@@ -487,11 +466,8 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         sh '''
                             set -eu
@@ -534,11 +510,8 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            usernameVariable: 'AWS_ACCESS_KEY_ID',
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: AWS_CREDENTIALS_ID]
                     ]) {
                         script {
                             smokeTest('prod')
