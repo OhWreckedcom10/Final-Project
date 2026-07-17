@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: final-project
-        image: ohwrecked/final-project:latest
+        image: IMAGE_URI_PLACEHOLDER
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         resources:
