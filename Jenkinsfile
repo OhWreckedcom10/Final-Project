@@ -607,31 +607,34 @@ to the production namespace on AWS EKS?
                         ]
                     ]) {
                         sh '''
-                            set -eu
+                                set -eu
 
-                            export AWS_DEFAULT_REGION="${AWS_REGION}"
+                                KUBECTL="kubectl --kubeconfig /workspace-kube/config --namespace prod"
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                get deployments,pods,services -o wide
+                                $KUBECTL delete pod prod-smoke-test \
+                                    --ignore-not-found=true \
+                                    --wait=false
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                run prod-smoke-test \
-                                --image=curlimages/curl:8.12.1 \
-                                --restart=Never \
-                                --rm \
-                                --attach \
-                                --command -- \
-                                curl \
-                                --fail \
-                                --silent \
-                                --show-error \
-                                --retry 10 \
-                                --retry-delay 5 \
-                                "http://${APP_NAME}/"
+                                $KUBECTL run prod-smoke-test \
+                                    --image=curlimages/curl:8.12.1 \
+                                    --restart=Never \
+                                    --command -- \
+                                    curl --fail --silent --show-error \
+                                        --retry 10 \
+                                        --retry-delay 5 \
+                                        http://final-project/
+
+                                $KUBECTL wait \
+                                    --for=jsonpath='{.status.phase}'=Succeeded \
+                                    pod/prod-smoke-test \
+                                    --timeout=180s || {
+                                        $KUBECTL describe pod prod-smoke-test || true
+                                        $KUBECTL logs prod-smoke-test || true
+                                        exit 1
+                                    }
+
+                                $KUBECTL logs prod-smoke-test
+                                $KUBECTL delete pod prod-smoke-test --wait=false
                         '''
                     }
                 }
