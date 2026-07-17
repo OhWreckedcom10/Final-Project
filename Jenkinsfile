@@ -1,7 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            defaultContainer 'python'
+            defaultContainer 'tools'
 
             yaml '''
 apiVersion: v1
@@ -80,33 +80,21 @@ spec:
     }
 
     options {
-        skipDefaultCheckout(true)
+        timeout(time: 45, unit: 'MINUTES')
         disableConcurrentBuilds()
-        buildDiscarder(
-            logRotator(
-                numToKeepStr: '10'
-            )
-        )
-        timeout(
-            time: 45,
-            unit: 'MINUTES'
-        )
+        timestamps()
+        skipDefaultCheckout(true)
     }
 
     environment {
         AWS_REGION = 'il-central-1'
         AWS_ACCOUNT_ID = '539896451836'
 
-        ECR_REGISTRY = '539896451836.dkr.ecr.il-central-1.amazonaws.com'
+        EKS_CLUSTER = 'final-project'
         ECR_REPOSITORY = 'final-project'
 
-        EKS_CLUSTER = 'final-project'
-
-        APP_NAME = 'final-project'
-
-        DEV_NAMESPACE = 'dev'
-        STAGE_NAMESPACE = 'stage'
-        PROD_NAMESPACE = 'prod'
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE_REPOSITORY = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
 
         KUBECONFIG = '/workspace-kube/config'
 
@@ -116,25 +104,22 @@ spec:
     stages {
         stage('Checkout') {
             steps {
-                container('jnlp') {
-                    retry(3){
+                container('tools') {
+                    retry(3) {
                         checkout scm
                     }
 
                     script {
-                        env.GIT_SHORT_SHA = sh(
+                        env.GIT_COMMIT_SHORT = sh(
                             script: 'git rev-parse --short=8 HEAD',
                             returnStdout: true
                         ).trim()
 
-                        env.IMAGE_TAG =
-                            "${BUILD_NUMBER}-${env.GIT_SHORT_SHA}"
-
-                        env.IMAGE_URI =
-                            "${ECR_REGISTRY}/${ECR_REPOSITORY}:${env.IMAGE_TAG}"
+                        env.IMAGE_TAG = "${BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+                        env.IMAGE_URI = "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
                     }
 
-                    echo "Commit: ${env.GIT_SHORT_SHA}"
+                    echo "Commit: ${env.GIT_COMMIT_SHORT}"
                     echo "Image: ${env.IMAGE_URI}"
                 }
             }
@@ -156,15 +141,27 @@ spec:
                         pip install -r app/requirements
 
                         python - <<'PYTHON_TEST'
-from app.app import app
+import sys
+
+sys.path.insert(0, "app")
+
+from app import app
 
 client = app.test_client()
 response = client.get("/")
 
 print("Status code:", response.status_code)
-print("Response:", response.data.decode())
+print("Response:", response.get_data(as_text=True))
 
-assert response.status_code == 200
+if response.status_code != 200:
+    raise SystemExit(
+        f"Expected HTTP 200, received {response.status_code}"
+    )
+
+if "Hello World" not in response.get_data(as_text=True):
+    raise SystemExit(
+        "Expected response to contain 'Hello World'"
+    )
 PYTHON_TEST
                     '''
                 }
@@ -175,19 +172,21 @@ PYTHON_TEST
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
                         sh '''
                             set -eu
 
                             export AWS_DEFAULT_REGION="${AWS_REGION}"
 
+                            echo "AWS identity:"
                             aws sts get-caller-identity
+
+                            echo "EKS cluster status:"
                             aws eks describe-cluster \
                                 --name "${EKS_CLUSTER}" \
                                 --region "${AWS_REGION}" \
@@ -199,16 +198,52 @@ PYTHON_TEST
             }
         }
 
+        stage('Configure EKS') {
+            steps {
+                container('tools') {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: "${AWS_CREDENTIALS_ID}",
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
+                    ]) {
+                        sh '''
+                            set -eu
+
+                            export AWS_DEFAULT_REGION="${AWS_REGION}"
+
+                            mkdir -p "$(dirname "${KUBECONFIG}")"
+
+                            aws eks update-kubeconfig \
+                                --name "${EKS_CLUSTER}" \
+                                --region "${AWS_REGION}" \
+                                --kubeconfig "${KUBECONFIG}"
+
+                            echo "Current Kubernetes context:"
+                            kubectl \
+                                --kubeconfig "${KUBECONFIG}" \
+                                config current-context
+
+                            echo "Cluster nodes:"
+                            kubectl \
+                                --kubeconfig "${KUBECONFIG}" \
+                                get nodes -o wide
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Configure ECR Authentication') {
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
                         sh '''
                             set -eu
@@ -226,7 +261,7 @@ PYTHON_TEST
 
                             ECR_PASSWORD="$(cat /ecr-auth/password)"
 
-                            ECR_AUTH="$(
+                            AUTH_VALUE="$(
                                 printf 'AWS:%s' "${ECR_PASSWORD}" |
                                 base64 |
                                 tr -d '\\n'
@@ -236,7 +271,7 @@ PYTHON_TEST
 {
   "auths": {
     "${ECR_REGISTRY}": {
-      "auth": "${ECR_AUTH}"
+      "auth": "${AUTH_VALUE}"
     }
   }
 }
@@ -264,8 +299,7 @@ EOF
                             --snapshot-mode=redo \
                             --image-download-retry=3 \
                             --push-retry=3 \
-                            --cache=true \
-                            --cache-ttl=24h
+                            --cache=false
 
                         echo "Image pushed:"
                         echo "${IMAGE_URI}"
@@ -280,7 +314,7 @@ EOF
                     sh '''
                         set -eu
 
-                        export TRIVY_USERNAME="AWS"
+                        export TRIVY_USERNAME='AWS'
                         export TRIVY_PASSWORD="$(cat /ecr-auth/password)"
 
                         trivy image \
@@ -296,65 +330,23 @@ EOF
             }
         }
 
-        stage('Configure EKS Access') {
-    steps {
-        container('tools') {
-            withCredentials([
-                [$class: 'AmazonWebServicesCredentialsBinding',
-                 credentialsId: 'aws-jenkins-credentials']
-            ]) {
-                sh '''
-                    set -eux
-
-                    echo "===== AWS ====="
-                    aws --version
-                    aws sts get-caller-identity
-
-                    echo "===== TOKEN ====="
-                    aws eks get-token \
-                        --cluster-name final-project \
-                        --region il-central-1
-
-                    echo "===== UPDATE KUBECONFIG ====="
-                    mkdir -p /workspace-kube
-
-                    aws eks update-kubeconfig \
-                        --name final-project \
-                        --region il-central-1 \
-                        --kubeconfig /workspace-kube/config
-
-                    echo "===== CONFIG ====="
-                    cat /workspace-kube/config
-
-                    echo "===== TEST ====="
-                    kubectl \
-                        --kubeconfig /workspace-kube/config \
-                        get nodes -o wide
-                '''
-            }
-        }
-    }
-}
-
         stage('Deploy DEV') {
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
                         sh '''
                             set -eu
-
                             export AWS_DEFAULT_REGION="${AWS_REGION}"
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                create namespace "${DEV_NAMESPACE}" \
+                                create namespace dev \
                                 --dry-run=client \
                                 -o yaml |
                             kubectl \
@@ -366,19 +358,18 @@ EOF
                                 k8s/dev/deployment.yaml |
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
+                                --namespace dev \
                                 apply -f -
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
+                                --namespace dev \
                                 apply -f k8s/dev/service.yaml
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                rollout status \
-                                deployment/"${APP_NAME}" \
+                                --namespace dev \
+                                rollout status deployment/final-project \
                                 --timeout=300s
                         '''
                     }
@@ -390,40 +381,15 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
-                        sh '''
-                            set -eu
-
-                            export AWS_DEFAULT_REGION="${AWS_REGION}"
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                get deployments,pods,services -o wide
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                run dev-smoke-test \
-                                --image=curlimages/curl:8.12.1 \
-                                --restart=Never \
-                                --rm \
-                                --attach \
-                                --command -- \
-                                curl \
-                                --fail \
-                                --silent \
-                                --show-error \
-                                --retry 10 \
-                                --retry-delay 5 \
-                                "http://${APP_NAME}/"
-                        '''
+                        script {
+                            smokeTest('dev')
+                        }
                     }
                 }
             }
@@ -433,21 +399,19 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
                         sh '''
                             set -eu
-
                             export AWS_DEFAULT_REGION="${AWS_REGION}"
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                create namespace "${STAGE_NAMESPACE}" \
+                                create namespace stage \
                                 --dry-run=client \
                                 -o yaml |
                             kubectl \
@@ -459,19 +423,18 @@ EOF
                                 k8s/stage/deployment.yaml |
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
+                                --namespace stage \
                                 apply -f -
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
+                                --namespace stage \
                                 apply -f k8s/stage/service.yaml
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                rollout status \
-                                deployment/"${APP_NAME}" \
+                                --namespace stage \
+                                rollout status deployment/final-project \
                                 --timeout=300s
                         '''
                     }
@@ -483,40 +446,15 @@ EOF
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
-                        sh '''
-                            set -eu
-
-                            export AWS_DEFAULT_REGION="${AWS_REGION}"
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                get deployments,pods,services -o wide
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                run stage-smoke-test \
-                                --image=curlimages/curl:8.12.1 \
-                                --restart=Never \
-                                --rm \
-                                --attach \
-                                --command -- \
-                                curl \
-                                --fail \
-                                --silent \
-                                --show-error \
-                                --retry 10 \
-                                --retry-delay 5 \
-                                "http://${APP_NAME}/"
-                        '''
+                        script {
+                            smokeTest('stage')
+                        }
                     }
                 }
             }
@@ -524,10 +462,7 @@ EOF
 
         stage('Approve Production') {
             options {
-                timeout(
-                    time: 15,
-                    unit: 'MINUTES'
-                )
+                timeout(time: 15, unit: 'MINUTES')
             }
 
             steps {
@@ -540,7 +475,7 @@ ${env.IMAGE_URI}
 
 to the production namespace on AWS EKS?
 """,
-                    ok: 'Deploy to Production'
+                    ok: 'Deploy to PROD'
                 )
             }
         }
@@ -549,21 +484,19 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
                         sh '''
                             set -eu
-
                             export AWS_DEFAULT_REGION="${AWS_REGION}"
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                create namespace "${PROD_NAMESPACE}" \
+                                create namespace prod \
                                 --dry-run=client \
                                 -o yaml |
                             kubectl \
@@ -575,19 +508,18 @@ to the production namespace on AWS EKS?
                                 k8s/prod/deployment.yaml |
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
+                                --namespace prod \
                                 apply -f -
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
+                                --namespace prod \
                                 apply -f k8s/prod/service.yaml
 
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                rollout status \
-                                deployment/"${APP_NAME}" \
+                                --namespace prod \
+                                rollout status deployment/final-project \
                                 --timeout=300s
                         '''
                     }
@@ -599,43 +531,15 @@ to the production namespace on AWS EKS?
             steps {
                 container('tools') {
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
+                        usernamePassword(
                             credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
                     ]) {
-                        sh '''
-                                set -eu
-
-                                KUBECTL="kubectl --kubeconfig /workspace-kube/config --namespace prod"
-
-                                $KUBECTL delete pod prod-smoke-test \
-                                    --ignore-not-found=true \
-                                    --wait=false
-
-                                $KUBECTL run prod-smoke-test \
-                                    --image=curlimages/curl:8.12.1 \
-                                    --restart=Never \
-                                    --command -- \
-                                    curl --fail --silent --show-error \
-                                        --retry 10 \
-                                        --retry-delay 5 \
-                                        http://final-project/
-
-                                $KUBECTL wait \
-                                    --for=jsonpath='{.status.phase}'=Succeeded \
-                                    pod/prod-smoke-test \
-                                    --timeout=180s || {
-                                        $KUBECTL describe pod prod-smoke-test || true
-                                        $KUBECTL logs prod-smoke-test || true
-                                        exit 1
-                                    }
-
-                                $KUBECTL logs prod-smoke-test
-                                $KUBECTL delete pod prod-smoke-test --wait=false
-                        '''
+                        script {
+                            smokeTest('prod')
+                        }
                     }
                 }
             }
@@ -643,22 +547,159 @@ to the production namespace on AWS EKS?
     }
 
     post {
-        success {
-            echo 'Pipeline completed successfully.'
-            echo "ECR image: ${env.IMAGE_URI}"
-            echo 'Deployed to AWS EKS: DEV, STAGE and PROD.'
-        }
-
-        failure {
-            echo 'Pipeline failed. Check the failed stage in the console output.'
-        }
-
-        aborted {
-            echo 'Pipeline was aborted or production deployment was not approved.'
-        }
-
         always {
             echo "Build result: ${currentBuild.currentResult}"
         }
+
+        success {
+            echo """
+Pipeline completed successfully.
+
+Image:
+${env.IMAGE_URI}
+
+DEV, STAGE and PROD passed their smoke tests.
+"""
+        }
+
+        failure {
+            echo """
+Pipeline failed.
+
+Check the failed stage and the smoke-test diagnostics in the console output.
+"""
+        }
+
+        aborted {
+            echo 'Pipeline was aborted or production approval timed out.'
+        }
     }
+}
+
+def smokeTest(String namespace) {
+    String smokePod = "${namespace}-smoke-${env.BUILD_NUMBER}"
+
+    sh """
+        set -eu
+
+        export AWS_DEFAULT_REGION="${env.AWS_REGION}"
+
+        KUBECTL="kubectl --kubeconfig ${env.KUBECONFIG} --namespace ${namespace}"
+
+        cleanup_smoke_test() {
+            echo "Cleaning up smoke-test pod ${smokePod}..."
+
+            \$KUBECTL delete pod "${smokePod}" \\
+                --ignore-not-found=true \\
+                --wait=false >/dev/null 2>&1 || true
+        }
+
+        show_diagnostics() {
+            echo "===== Smoke-test pod logs ====="
+            \$KUBECTL logs "${smokePod}" || true
+
+            echo "===== Smoke-test pod description ====="
+            \$KUBECTL describe pod "${smokePod}" || true
+
+            echo "===== Namespace events ====="
+            \$KUBECTL get events \\
+                --sort-by='.metadata.creationTimestamp' || true
+        }
+
+        trap cleanup_smoke_test EXIT INT TERM
+
+        echo "========================================"
+        echo "Validating namespace: ${namespace}"
+        echo "Image: ${env.IMAGE_URI}"
+        echo "Service: http://final-project/"
+        echo "Smoke pod: ${smokePod}"
+        echo "========================================"
+
+        \$KUBECTL get deployments,pods,services -o wide
+
+        echo "Checking service endpoints..."
+
+        ENDPOINTS="\$(
+            \$KUBECTL get endpoints final-project \\
+                -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null || true
+        )"
+
+        if [ -z "\${ENDPOINTS}" ]; then
+            echo "Service final-project has no ready endpoints."
+            \$KUBECTL describe service final-project || true
+            \$KUBECTL get pods --show-labels || true
+            exit 1
+        fi
+
+        echo "Service endpoints: \${ENDPOINTS}"
+
+        cleanup_smoke_test
+
+        echo "Creating smoke-test pod..."
+
+        \$KUBECTL run "${smokePod}" \\
+            --image=curlimages/curl:8.12.1 \\
+            --restart=Never \\
+            --command -- \\
+            curl \\
+                --fail \\
+                --silent \\
+                --show-error \\
+                --retry 12 \\
+                --retry-all-errors \\
+                --retry-delay 5 \\
+                --connect-timeout 10 \\
+                --max-time 120 \\
+                http://final-project/
+
+        echo "Waiting for smoke-test pod to finish..."
+
+        ELAPSED=0
+        TIMEOUT_SECONDS=180
+        INTERVAL=3
+
+        while [ "\${ELAPSED}" -lt "\${TIMEOUT_SECONDS}" ]; do
+            PHASE="\$(
+                \$KUBECTL get pod "${smokePod}" \\
+                    -o jsonpath='{.status.phase}' 2>/dev/null || true
+            )"
+
+            echo "Smoke-test phase: \${PHASE:-Pending}"
+
+            case "\${PHASE}" in
+                Succeeded)
+                    echo "===== Smoke-test response ====="
+
+                    RESPONSE="\$(
+                        \$KUBECTL logs "${smokePod}"
+                    )"
+
+                    echo "\${RESPONSE}"
+
+                    echo "\${RESPONSE}" |
+                        grep -q 'Hello World' || {
+                            echo "Expected response was not returned."
+                            show_diagnostics
+                            exit 1
+                        }
+
+                    echo "Smoke test passed for ${namespace}."
+                    exit 0
+                    ;;
+
+                Failed)
+                    echo "Smoke test failed for ${namespace}."
+                    show_diagnostics
+                    exit 1
+                    ;;
+            esac
+
+            sleep "\${INTERVAL}"
+            ELAPSED=\$((ELAPSED + INTERVAL))
+        done
+
+        echo "Smoke test timed out after \${TIMEOUT_SECONDS} seconds."
+        show_diagnostics
+        exit 1
+    """
 }
