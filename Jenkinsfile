@@ -55,12 +55,12 @@ spec:
       tty: true
 
     - name: kubectl
-      image: bitnami/kubectl:1.31
+      image: registry.k8s.io/kubectl:v1.31.0
       command:
-        - sh
+        - /bin/sh
         - -c
       args:
-        - cat
+        - sleep 86400
       tty: true
       volumeMounts:
         - name: kubeconfig
@@ -471,19 +471,7 @@ EOF
             echo 'Pipeline was aborted or production deployment was not approved.'
         }
 
-        always {
-            container('kubectl') {
-                sh '''
-                    kubectl delete pod dev-smoke-test \
-                        --namespace "${DEV_NAMESPACE}" \
-                        --ignore-not-found=true 2>/dev/null || true
-
-                    kubectl delete pod prod-smoke-test \
-                        --namespace "${PROD_NAMESPACE}" \
-                        --ignore-not-found=true 2>/dev/null || true
-                '''
-            }
-
+        cleanup {
             deleteDir()
         }
     }
