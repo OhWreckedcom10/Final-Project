@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir \
 
 COPY app/app.py .
 
-FROM gcr.io/distroless/python3-debian12
+FROM gcr.io/distroless/python3-debian12:latest
 
 WORKDIR /app
 

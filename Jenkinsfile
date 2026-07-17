@@ -263,7 +263,9 @@ EOF
                             --destination="${IMAGE_URI}" \
                             --snapshot-mode=redo \
                             --image-download-retry=3 \
-                            --push-retry=3
+                            --push-retry=3 \
+                            --cache=true \
+                            --cache-ttl=24h
 
                         echo "Image pushed:"
                         echo "${IMAGE_URI}"
@@ -282,6 +284,7 @@ EOF
                         export TRIVY_PASSWORD="$(cat /ecr-auth/password)"
 
                         trivy image \
+                            --timeout 15m \
                             --scanners vuln \
                             --severity HIGH,CRITICAL \
                             --ignore-unfixed \
