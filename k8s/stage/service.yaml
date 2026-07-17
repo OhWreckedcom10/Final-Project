@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: final-project
+  labels:
+    app: final-project
+    environment: stage
+spec:
+  type: ClusterIP
+
+  selector:
+    app: final-project
+    environment: stage
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
