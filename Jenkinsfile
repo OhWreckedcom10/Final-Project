@@ -97,7 +97,7 @@ spec:
 
         KUBECONFIG = '/workspace-kube/config'
 
-        AWS_CREDENTIALS_ID = 'aws-credentials'
+        AWS_CREDENTIALS_ID = 'aws-jenkins-credentials'
     }
 
     stages {
