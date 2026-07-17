@@ -155,7 +155,7 @@ spec:
                         pip install -r app/requirements
 
                         python - <<'PYTHON_TEST'
-from app import app
+from app.app import app
 
 client = app.test_client()
 response = client.get("/")
