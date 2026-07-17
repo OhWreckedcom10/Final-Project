@@ -143,10 +143,6 @@ spec:
             steps {
                 container('python') {
                     sh '''
-                        pwd
-                        echo "Repository contents:"
-                        find . -maxdepth 3 -type f | sort
-                        
                         set -eu
 
                         echo "Python version:"
@@ -156,7 +152,7 @@ spec:
                         . .venv/bin/activate
 
                         python -m pip install --upgrade pip
-                        pip install -r app/requirements.txt
+                        pip install -r app/requirements
 
                         python - <<'PYTHON_TEST'
 from app import app
