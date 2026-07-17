@@ -73,8 +73,8 @@ spec:
       emptyDir: {}
 
     - name: trivy-cache
-        persistentVolumeClaim:
-            claimName: trivy-cache-pvc
+      persistentVolumeClaim:
+        claimName: trivy-cache-pvc
 '''
         }
     }
