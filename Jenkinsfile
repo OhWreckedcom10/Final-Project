@@ -297,44 +297,44 @@ EOF
         }
 
         stage('Configure EKS Access') {
-            steps {
-                container('tools') {
-                    withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
-                            credentialsId: "${AWS_CREDENTIALS_ID}",
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
-                    ]) {
-                        sh '''
-                            set -eu
+    steps {
+        container('tools') {
+            withCredentials([
+                [$class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'aws-jenkins-credentials']
+            ]) {
+                sh '''
+                    set -eux
 
-                            export AWS_DEFAULT_REGION="${AWS_REGION}"
+                    echo "===== AWS ====="
+                    aws --version
+                    aws sts get-caller-identity
 
-                            mkdir -p "$(dirname "${KUBECONFIG}")"
+                    echo "===== TOKEN ====="
+                    aws eks get-token \
+                        --cluster-name final-project \
+                        --region il-central-1
 
-                            aws eks update-kubeconfig \
-                                --name "${EKS_CLUSTER}" \
-                                --region "${AWS_REGION}" \
-                                --kubeconfig "${KUBECONFIG}"
+                    echo "===== UPDATE KUBECONFIG ====="
+                    mkdir -p /workspace-kube
 
-                            chmod 600 "${KUBECONFIG}"
+                    aws eks update-kubeconfig \
+                        --name final-project \
+                        --region il-central-1 \
+                        --kubeconfig /workspace-kube/config
 
-                            echo "Current Kubernetes context:"
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                config current-context
+                    echo "===== CONFIG ====="
+                    cat /workspace-kube/config
 
-                            echo "Cloud EKS nodes:"
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                get nodes -o wide
-                        '''
-                    }
-                }
+                    echo "===== TEST ====="
+                    kubectl \
+                        --kubeconfig /workspace-kube/config \
+                        get nodes -o wide
+                '''
             }
         }
+    }
+}
 
         stage('Deploy DEV') {
             steps {
