@@ -1,0 +1,103 @@
+=========================================
+     KUBERNETES PROJECT STATUS
+=========================================
+
+=========================================
+            ROLLOUTS
+=========================================
+NAMESPACE   NAME                  DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+dev         final-project-dev     2         2         2            2           6h3m
+prod        final-project-prod    2         2         2            2           6h3m
+stage       final-project-stage   2         2         2            2           6h3m
+
+=========================================
+              PODS
+=========================================
+NAMESPACE       NAME                                                READY   STATUS    RESTARTS   AGE
+argo-rollouts   argo-rollouts-79d7dd7db7-7zslp                      1/1     Running   0          6h12m
+argocd          argocd-application-controller-0                     1/1     Running   0          6h5m
+argocd          argocd-applicationset-controller-675795c44d-56xm4   1/1     Running   0          6h15m
+argocd          argocd-dex-server-88459fd79-tnz9j                   1/1     Running   0          6h8m
+argocd          argocd-notifications-controller-5d8b8b6cdb-tzmdd    1/1     Running   0          6h5m
+argocd          argocd-redis-8c79c56f9-gttsc                        1/1     Running   0          6h5m
+argocd          argocd-repo-server-cd99b6767-lplz7                  1/1     Running   0          6h15m
+argocd          argocd-server-6ccbbd6f66-zhx9r                      1/1     Running   0          6h15m
+dev             final-project-dev-b49446d68-5g8b2                   1/1     Running   0          47m
+dev             final-project-dev-b49446d68-k4zwd                   1/1     Running   0          46m
+kube-system     aws-node-g5qvd                                      2/2     Running   0          6h18m
+kube-system     aws-node-hj7gx                                      2/2     Running   0          6h19m
+kube-system     aws-node-sbzh5                                      2/2     Running   0          5h46m
+kube-system     coredns-9b6cf678b-qwcg8                             1/1     Running   0          6h5m
+kube-system     coredns-9b6cf678b-rd6m7                             1/1     Running   0          6h12m
+kube-system     kube-proxy-c28zx                                    1/1     Running   0          6h19m
+kube-system     kube-proxy-fplcp                                    1/1     Running   0          6h18m
+kube-system     kube-proxy-mj5wp                                    1/1     Running   0          5h46m
+kube-system     metrics-server-687f9dc499-b7fvg                     1/1     Running   0          5h48m
+prod            final-project-prod-5d4759b97-bd5wz                  1/1     Running   0          42m
+prod            final-project-prod-5d4759b97-n4tx6                  1/1     Running   0          43m
+stage           final-project-stage-d55c485b8-jwjsl                 1/1     Running   0          44m
+stage           final-project-stage-d55c485b8-xjhhj                 1/1     Running   0          44m
+
+=========================================
+            SERVICES
+=========================================
+NAMESPACE       NAME                                      TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
+argo-rollouts   argo-rollouts-metrics                     ClusterIP      10.100.46.29     <none>                                                                       8090/TCP                     6h38m
+argocd          argocd-applicationset-controller          ClusterIP      10.100.59.8      <none>                                                                       7000/TCP,8080/TCP            7h33m
+argocd          argocd-dex-server                         ClusterIP      10.100.6.232     <none>                                                                       5556/TCP,5557/TCP,5558/TCP   7h33m
+argocd          argocd-metrics                            ClusterIP      10.100.71.169    <none>                                                                       8082/TCP                     7h33m
+argocd          argocd-notifications-controller-metrics   ClusterIP      10.100.153.36    <none>                                                                       9001/TCP                     7h33m
+argocd          argocd-redis                              ClusterIP      10.100.58.245    <none>                                                                       6379/TCP                     7h33m
+argocd          argocd-repo-server                        ClusterIP      10.100.7.3       <none>                                                                       8081/TCP,8084/TCP            7h33m
+argocd          argocd-server                             ClusterIP      10.100.152.71    <none>                                                                       80/TCP,443/TCP               7h33m
+argocd          argocd-server-metrics                     ClusterIP      10.100.11.11     <none>                                                                       8083/TCP                     7h33m
+default         kubernetes                                ClusterIP      10.100.0.1       <none>                                                                       443/TCP                      29h
+dev             final-project                             ClusterIP      10.100.216.187   <none>                                                                       80/TCP                       21h
+dev             final-project-dev-service                 NodePort       10.100.132.148   <none>                                                                       80:30081/TCP                 6h3m
+kube-system     eks-extension-metrics-api                 ClusterIP      10.100.130.134   <none>                                                                       443/TCP                      29h
+kube-system     kube-dns                                  ClusterIP      10.100.0.10      <none>                                                                       53/UDP,53/TCP,9153/TCP       29h
+kube-system     metrics-server                            ClusterIP      10.100.153.234   <none>                                                                       443/TCP                      5h48m
+prod            final-project                             LoadBalancer   10.100.223.85    a3111d3513bd1492ba748060fd97fdf2-1296569175.il-central-1.elb.amazonaws.com   80:30200/TCP                 21h
+prod            final-project-prod-service                NodePort       10.100.170.218   <none>                                                                       80:30083/TCP                 6h3m
+stage           final-project                             ClusterIP      10.100.211.93    <none>                                                                       80/TCP                       21h
+stage           final-project-stage-service               NodePort       10.100.53.43     <none>                                                                       80:30082/TCP                 6h3m
+
+=========================================
+               HPA
+=========================================
+NAMESPACE   NAME                      REFERENCE                     TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+dev         final-project-dev-hpa     Rollout/final-project-dev     cpu: 2%/70%   2         5         2          6h3m
+prod        final-project-prod-hpa    Rollout/final-project-prod    cpu: 0%/70%   2         5         2          6h3m
+stage       final-project-stage-hpa   Rollout/final-project-stage   cpu: 1%/70%   2         5         2          6h3m
+
+=========================================
+          ENVIRONMENT SUMMARY
+=========================================
+
+Namespace: dev
+rollout.argoproj.io/final-project-dev   2     2     2     2     6h3m
+pod/final-project-dev-b49446d68-5g8b2   1/1   Running   0     47m
+pod/final-project-dev-b49446d68-k4zwd   1/1   Running   0     46m
+service/final-project               ClusterIP   10.100.216.187   <none>   80/TCP         21h
+service/final-project-dev-service   NodePort    10.100.132.148   <none>   80:30081/TCP   6h3m
+horizontalpodautoscaler.autoscaling/final-project-dev-hpa   Rollout/final-project-dev   cpu: 2%/70%   2     5     2     6h3m
+
+Namespace: stage
+rollout.argoproj.io/final-project-stage   2     2     2     2     6h3m
+pod/final-project-stage-d55c485b8-jwjsl   1/1   Running   0     44m
+pod/final-project-stage-d55c485b8-xjhhj   1/1   Running   0     44m
+service/final-project                 ClusterIP   10.100.211.93   <none>   80/TCP         21h
+service/final-project-stage-service   NodePort    10.100.53.43    <none>   80:30082/TCP   6h3m
+horizontalpodautoscaler.autoscaling/final-project-stage-hpa   Rollout/final-project-stage   cpu: 1%/70%   2     5     2     6h3m
+
+Namespace: prod
+rollout.argoproj.io/final-project-prod   2     2     2     2     6h3m
+pod/final-project-prod-5d4759b97-bd5wz   1/1   Running   0     42m
+pod/final-project-prod-5d4759b97-n4tx6   1/1   Running   0     43m
+service/final-project                LoadBalancer   10.100.223.85    a3111d3513bd1492ba748060fd97fdf2-1296569175.il-central-1.elb.amazonaws.com   80:30200/TCP   21h
+service/final-project-prod-service   NodePort       10.100.170.218   <none>                                                                       80:30083/TCP   6h3m
+horizontalpodautoscaler.autoscaling/final-project-prod-hpa   Rollout/final-project-prod   cpu: 0%/70%   2     5     2     6h3m
+
+=========================================
+             COMPLETED
+=========================================
