@@ -58,14 +58,11 @@ def syncArgoApplication(String applicationName) {
     container('tools') {
         sh """
             set -eu
-            export ARGOCD_NAMESPACE=argocd
-            /custom-tools/argocd --core \
-                app sync '${applicationName}' \
+            /custom-tools/argocd app sync '${applicationName}' \
                 --prune \
                 --timeout 300
 
-            /custom-tools/argocd --core \
-                app wait '${applicationName}' \
+            /custom-tools/argocd app wait '${applicationName}' \
                 --sync \
                 --health \
                 --timeout 300
@@ -171,18 +168,15 @@ spec:
       tty: true
 
     - name: yq
-      image: mikefarah/yq:4.45.4
+      image: mikefarah/yq:4.53.2
       command: ["/bin/sh", "-c"]
       args: ["cat"]
       tty: true
 
     - name: kaniko
       image: gcr.io/kaniko-project/executor:v1.23.2-debug
-      command:
-        - /busybox/sh
-        - -c
-      args:
-        - cat
+      command: ["/busybox/sh", "-c"]
+      args: ["cat"]
       tty: true
       volumeMounts:
         - name: kaniko-config
@@ -594,10 +588,25 @@ JSON
                                 --region "${AWS_REGION}" \
                                 --kubeconfig "${KUBECONFIG}"
                             chmod 600 "${KUBECONFIG}"
+
+                            kubectl config set-context \
+                                --current \
+                                --namespace=argocd
+
+                            echo "Current Kubernetes context:"
+                            kubectl config current-context
+
+                            echo "Current Kubernetes namespace:"
+                            kubectl config view --minify \
+                                -o jsonpath='{..namespace}'
+                            echo
+
                             kubectl get nodes -o wide
-                            kubectl get applications -n argocd
-                            export ARGOCD_NAMESPACE=argocd
-                            /custom-tools/argocd --core app list
+                            kubectl get configmap argocd-cm
+                            kubectl get applications
+
+                            /custom-tools/argocd login --core
+                            /custom-tools/argocd app list
                         '''
                     }
                 }
