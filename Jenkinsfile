@@ -58,12 +58,12 @@ def syncArgoApplication(String applicationName) {
     container('tools') {
         sh """
             set -eu
-            argocd --core --namespace argocd \
+            /custom-tools/argocd --core --namespace argocd \
                 app sync '${applicationName}' \
                 --prune \
                 --timeout 300
 
-            argocd --core --namespace argocd \
+            /custom-tools/argocd --core --namespace argocd \
                 app wait '${applicationName}' \
                 --sync \
                 --health \
@@ -352,7 +352,7 @@ PYTHON_TEST
                             -O /custom-tools/argocd \
                             "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-${ARGO_ARCH}"
                         chmod 0755 /custom-tools/argocd
-                        argocd version --client
+                        /custom-tools/argocd version --client
                     '''
                 }
             }
@@ -534,7 +534,7 @@ JSON
 
         stage('Build and Push Image') {
             steps {
-                container(name: 'kaniko', shell: '/busybox/sh') {
+                container('kaniko') {
                     sh '''
                         set -eu
                         /kaniko/executor \
@@ -544,7 +544,11 @@ JSON
                             --snapshot-mode=redo \
                             --image-download-retry=3 \
                             --push-retry=3 \
-                            --cache=false
+                            --cache=true \
+                            --cache-ttl=24h
+
+                        echo "Image pushed:"
+                        echo "${IMAGE_URI}"
                     '''
                 }
             }
@@ -589,7 +593,7 @@ JSON
                             chmod 600 "${KUBECONFIG}"
                             kubectl get nodes -o wide
                             kubectl get applications -n argocd
-                            argocd --core --namespace argocd app list
+                            /custom-tools/argocd --core --namespace argocd app list
                         '''
                     }
                 }
