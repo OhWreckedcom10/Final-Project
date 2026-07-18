@@ -1,9 +1,9 @@
 replicaCount: 2
 
 image:
-  repository: ohwrecked/final-project
-  tag: latest
-  pullPolicy: Always
+  repository: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
+  tag: "58-843a3479"
+  pullPolicy: IfNotPresent
 
 service:
   type: NodePort

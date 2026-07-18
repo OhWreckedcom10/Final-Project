@@ -55,6 +55,36 @@ spec:
         - name: ecr-auth
           mountPath: /ecr-auth
 
+    - name: helm
+      image: alpine/helm:3.17.3
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - cat
+      tty: true
+
+    - name: argocd
+      image: quay.io/argoproj/argocd:v3.0.6
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: kubeconfig
+          mountPath: /workspace-kube
+
+    - name: yq
+      image: mikefarah/yq:4.45.4
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - cat
+      tty: true
+
     - name: kaniko
       image: gcr.io/kaniko-project/executor:v1.23.2-debug
       command:
@@ -111,10 +141,9 @@ spec:
         )
 
         timeout(
-            time: 60,
+            time: 90,
             unit: 'MINUTES'
         )
-
     }
 
     environment {
@@ -123,6 +152,7 @@ spec:
         AWS_ACCOUNT_ID = '539896451836'
 
         AWS_CREDENTIALS_ID = 'aws-jenkins-credentials'
+        GITHUB_CREDENTIALS_ID = 'github-credentials'
 
         ECR_REGISTRY =
             '539896451836.dkr.ecr.il-central-1.amazonaws.com'
@@ -135,6 +165,20 @@ spec:
         STAGE_NAMESPACE = 'stage'
         PROD_NAMESPACE = 'prod'
 
+        DEV_ARGO_APP = 'final-project-dev'
+        STAGE_ARGO_APP = 'final-project-stage'
+        PROD_ARGO_APP = 'final-project-prod'
+
+        DEV_ROLLOUT = 'final-project-dev'
+        STAGE_ROLLOUT = 'final-project-stage'
+        PROD_ROLLOUT = 'final-project-prod'
+
+        DEV_VALUES_FILE = 'environments/dev/values.yaml'
+        STAGE_VALUES_FILE = 'environments/stage/values.yaml'
+        PROD_VALUES_FILE = 'environments/prod/values.yaml'
+
+        HELM_CHART = 'helm/hello-world'
+
         KUBECONFIG = '/workspace-kube/config'
 
         TERRAFORM_DIRECTORY = 'terraform'
@@ -142,6 +186,9 @@ spec:
         TERRAFORM_PLAN_TEXT = 'tfplan.txt'
 
         TERRAFORM_CHANGES = 'false'
+
+        GIT_REPOSITORY =
+            'github.com/OhWreckedcom10/Final-Project.git'
     }
 
     stages {
@@ -166,7 +213,8 @@ spec:
                     }
 
                     echo "Commit: ${env.GIT_SHORT_SHA}"
-                    echo "Image: ${env.IMAGE_URI}"
+                    echo "Image tag: ${env.IMAGE_TAG}"
+                    echo "Image URI: ${env.IMAGE_URI}"
                 }
             }
         }
@@ -177,7 +225,6 @@ spec:
                     sh '''
                         set -eu
 
-                        echo "Python version:"
                         python3 --version
 
                         python3 -m venv .venv
@@ -217,6 +264,14 @@ PYTHON_TEST
                             echo "AWS caller identity:"
                             aws sts get-caller-identity
 
+                            echo "ECR repository:"
+                            aws ecr describe-repositories \
+                                --repository-names "${ECR_REPOSITORY}" \
+                                --region "${AWS_REGION}" \
+                                --query \
+                                  'repositories[0].repositoryUri' \
+                                --output text
+
                             echo "EKS cluster status:"
                             aws eks describe-cluster \
                                 --name "${EKS_CLUSTER}" \
@@ -235,8 +290,6 @@ PYTHON_TEST
                     dir("${TERRAFORM_DIRECTORY}") {
                         sh '''
                             set -eu
-
-                            echo "Checking Terraform formatting..."
                             terraform fmt -check -recursive
                         '''
                     }
@@ -296,27 +349,29 @@ PYTHON_TEST
 
                                 if (fileExists('terraform-state-list.txt')) {
                                     stateResources =
-                                        readFile('terraform-state-list.txt').trim()
+                                        readFile(
+                                            'terraform-state-list.txt'
+                                        ).trim()
                                 }
 
-                                if (stateStatus != 0 || stateResources == '') {
+                                if (
+                                    stateStatus != 0 ||
+                                    stateResources == ''
+                                ) {
                                     echo '''
-Terraform state is missing or contains no resources.
+Terraform state is unavailable or empty.
 
-Automatic Terraform apply has been blocked for safety.
+Automatic Terraform apply has been blocked.
 
-Your AWS infrastructure already exists, so you must first:
-
-1. Configure a persistent remote backend.
-2. Import the existing AWS resources.
-3. Confirm that terraform plan reports the expected result.
-4. Rerun the Jenkins pipeline.
-
-This check prevents Terraform from recreating or conflicting with
-existing EKS, ECR, VPC and IAM resources.
+Configure the remote backend and import the existing
+AWS infrastructure before allowing Terraform to apply.
 '''
 
-                                    if (fileExists('terraform-state-error.txt')) {
+                                    if (
+                                        fileExists(
+                                            'terraform-state-error.txt'
+                                        )
+                                    ) {
                                         echo readFile(
                                             'terraform-state-error.txt'
                                         )
@@ -360,23 +415,11 @@ existing EKS, ECR, VPC and IAM resources.
 
                                 if (terraformExitCode == 0) {
                                     env.TERRAFORM_CHANGES = 'false'
-
-                                    echo '''
-Terraform plan completed successfully.
-No infrastructure changes were detected.
-Terraform Apply will be skipped.
-'''
+                                    echo 'No Terraform changes detected.'
                                 } else if (terraformExitCode == 2) {
                                     env.TERRAFORM_CHANGES = 'true'
-
-                                    echo '''
-Terraform plan completed successfully.
-Infrastructure changes were detected.
-Terraform Apply will run.
-'''
+                                    echo 'Terraform changes detected.'
                                 } else {
-                                    env.TERRAFORM_CHANGES = 'false'
-
                                     error(
                                         "Terraform plan failed with " +
                                         "exit code ${terraformExitCode}."
@@ -389,9 +432,9 @@ Terraform Apply will run.
                                         "${TERRAFORM_PLAN_FILE}" \
                                         > "${TERRAFORM_PLAN_TEXT}"
 
-                                    echo "===== TERRAFORM PLAN SUMMARY ====="
+                                    echo "===== TERRAFORM PLAN ====="
                                     cat "${TERRAFORM_PLAN_TEXT}"
-                                    echo "=================================="
+                                    echo "=========================="
                                 '''
                             }
                         }
@@ -400,7 +443,8 @@ Terraform Apply will run.
 
                 archiveArtifacts(
                     artifacts:
-                        "${TERRAFORM_DIRECTORY}/${TERRAFORM_PLAN_TEXT}",
+                        "${TERRAFORM_DIRECTORY}/" +
+                        "${TERRAFORM_PLAN_TEXT}",
                     fingerprint: true,
                     allowEmptyArchive: false
                 )
@@ -426,15 +470,11 @@ Terraform Apply will run.
                             sh '''
                                 set -eu
 
-                                echo "Applying the saved Terraform plan..."
-
                                 terraform apply \
                                     -input=false \
                                     -no-color \
                                     -auto-approve \
                                     "${TERRAFORM_PLAN_FILE}"
-
-                                echo "Terraform apply completed successfully."
                             '''
                         }
                     }
@@ -463,7 +503,9 @@ Terraform Apply will run.
 
                             chmod 600 /ecr-auth/password
 
-                            ECR_PASSWORD="$(cat /ecr-auth/password)"
+                            ECR_PASSWORD="$(
+                                cat /ecr-auth/password
+                            )"
 
                             ECR_AUTH="$(
                                 printf 'AWS:%s' "${ECR_PASSWORD}" |
@@ -481,9 +523,8 @@ Terraform Apply will run.
 }
 EOF
 
-                            chmod 600 /kaniko/.docker/config.json
-
-                            echo "ECR authentication configured."
+                            chmod 600 \
+                                /kaniko/.docker/config.json
                         '''
                     }
                 }
@@ -506,7 +547,7 @@ EOF
                             --cache=true \
                             --cache-ttl=24h
 
-                        echo "Image pushed:"
+                        echo "Pushed image:"
                         echo "${IMAGE_URI}"
                     '''
                 }
@@ -520,7 +561,9 @@ EOF
                         set -eu
 
                         export TRIVY_USERNAME="AWS"
-                        export TRIVY_PASSWORD="$(cat /ecr-auth/password)"
+                        export TRIVY_PASSWORD="$(
+                            cat /ecr-auth/password
+                        )"
 
                         trivy image \
                             --scanners vuln \
@@ -546,7 +589,9 @@ EOF
                         sh '''
                             set -eu
 
-                            mkdir -p "$(dirname "${KUBECONFIG}")"
+                            mkdir -p "$(
+                                dirname "${KUBECONFIG}"
+                            )"
 
                             aws eks update-kubeconfig \
                                 --name "${EKS_CLUSTER}" \
@@ -555,238 +600,378 @@ EOF
 
                             chmod 600 "${KUBECONFIG}"
 
-                            echo "Current Kubernetes context:"
-
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
                                 config current-context
 
-                            echo "Cloud EKS nodes:"
-
                             kubectl \
                                 --kubeconfig "${KUBECONFIG}" \
                                 get nodes -o wide
+
+                            kubectl \
+                                --kubeconfig "${KUBECONFIG}" \
+                                get applications \
+                                -n argocd
                         '''
                     }
                 }
             }
         }
 
-        stage('Deploy DEV') {
+        stage('Update DEV Helm Values') {
             steps {
-                container('tools') {
+                container('yq') {
+                    sh '''
+                        set -eu
+
+                        yq -i \
+                          '.image.repository = strenv(ECR_REGISTRY)'\
+' + "/" + strenv(ECR_REPOSITORY)' \
+                          "${DEV_VALUES_FILE}"
+
+                        yq -i \
+                          '.image.tag = strenv(IMAGE_TAG)' \
+                          "${DEV_VALUES_FILE}"
+
+                        yq -i \
+                          '.image.pullPolicy = "IfNotPresent"' \
+                          "${DEV_VALUES_FILE}"
+
+                        echo "Updated DEV values:"
+                        yq '.image' "${DEV_VALUES_FILE}"
+                    '''
+                }
+            }
+        }
+
+        stage('Validate DEV Helm Chart') {
+            steps {
+                container('helm') {
+                    sh '''
+                        set -eu
+
+                        helm lint "${HELM_CHART}" \
+                            -f "${DEV_VALUES_FILE}"
+
+                        helm template "${DEV_ARGO_APP}" \
+                            "${HELM_CHART}" \
+                            -f "${DEV_VALUES_FILE}" \
+                            > rendered-dev.yaml
+
+                        grep -q '^kind: Rollout$' \
+                            rendered-dev.yaml
+
+                        grep -q "${IMAGE_TAG}" \
+                            rendered-dev.yaml
+                    '''
+                }
+            }
+        }
+
+        stage('Commit DEV GitOps Change') {
+            steps {
+                container('jnlp') {
                     withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                        usernamePassword(
+                            credentialsId:
+                                "${GITHUB_CREDENTIALS_ID}",
+                            usernameVariable: 'GIT_USERNAME',
+                            passwordVariable: 'GIT_TOKEN'
+                        )
                     ]) {
                         sh '''
                             set -eu
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                create namespace "${DEV_NAMESPACE}" \
-                                --dry-run=client \
-                                -o yaml |
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                apply -f -
+                            git config user.name \
+                                "Jenkins GitOps"
 
-                            sed \
-                                "s|IMAGE_URI_PLACEHOLDER|${IMAGE_URI}|g" \
-                                k8s/dev/deployment.yaml |
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                apply -f -
+                            git config user.email \
+                                "jenkins@final-project.local"
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                apply -f k8s/dev/service.yaml
+                            git add "${DEV_VALUES_FILE}"
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                rollout status \
-                                deployment/"${APP_NAME}" \
-                                --timeout=300s
+                            if git diff --cached --quiet; then
+                                echo "No DEV values change."
+                                exit 0
+                            fi
+
+                            git commit \
+                                -m "Deploy ${IMAGE_TAG} to dev [skip ci]"
+
+                            set +x
+
+                            git remote set-url origin \
+                              "https://${GIT_USERNAME}:${GIT_TOKEN}@${GIT_REPOSITORY}"
+
+                            git push origin HEAD:main
+
+                            set -x
                         '''
                     }
                 }
             }
         }
 
-        // stage('Validate DEV') {
-        //     steps {
-        //         container('tools') {
-        //             withCredentials([
-        //                 [$class: 'AmazonWebServicesCredentialsBinding',
-        //                   credentialsId: 'aws-jenkins-credentials',
-        //                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-        //                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-        //             ]) {
-        //                 sh '''
-        //                     set -eu
+        stage('Argo CD Sync DEV') {
+            steps {
+                container('argocd') {
+                    sh '''
+                        set -eu
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${DEV_NAMESPACE}" \
-        //                         get deployments,pods,services -o wide
+                        argocd \
+                            --core \
+                            --kubeconfig "${KUBECONFIG}" \
+                            --namespace argocd \
+                            app sync "${DEV_ARGO_APP}" \
+                            --prune \
+                            --timeout 300
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${DEV_NAMESPACE}" \
-        //                         delete pod dev-smoke-test \
-        //                         --ignore-not-found=true
+                        argocd \
+                            --core \
+                            --kubeconfig "${KUBECONFIG}" \
+                            --namespace argocd \
+                            app wait "${DEV_ARGO_APP}" \
+                            --sync \
+                            --health \
+                            --timeout 300
+                    '''
+                }
+            }
+        }
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${DEV_NAMESPACE}" \
-        //                         run dev-smoke-test \
-        //                         --image=curlimages/curl:8.12.1 \
-        //                         --restart=Never \
-        //                         --rm \
-        //                         --attach \
-        //                         --command -- \
-        //                         curl \
-        //                         --fail \
-        //                         --silent \
-        //                         --show-error \
-        //                         --retry 10 \
-        //                         --retry-delay 5 \
-        //                         "http://${APP_NAME}/"
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Wait for DEV Rollout') {
+            steps {
+                container('tools') {
+                    sh '''
+                        set -eu
+
+                        timeout 360 sh -c '
+                            while true; do
+                                IMAGE="$(
+                                    kubectl \
+                                      --kubeconfig \
+                                        "${KUBECONFIG}" \
+                                      -n "${DEV_NAMESPACE}" \
+                                      get rollout \
+                                        "${DEV_ROLLOUT}" \
+                                      -o jsonpath="{.spec.template.spec.containers[0].image}"
+                                )"
+
+                                PHASE="$(
+                                    kubectl \
+                                      --kubeconfig \
+                                        "${KUBECONFIG}" \
+                                      -n "${DEV_NAMESPACE}" \
+                                      get rollout \
+                                        "${DEV_ROLLOUT}" \
+                                      -o jsonpath="{.status.phase}"
+                                )"
+
+                                echo \
+                                  "DEV image=${IMAGE}, phase=${PHASE}"
+
+                                case "${PHASE}" in
+                                    Healthy)
+                                        echo "${IMAGE}" |
+                                            grep -q \
+                                            ":${IMAGE_TAG}$"
+                                        exit 0
+                                        ;;
+                                    Degraded)
+                                        exit 1
+                                        ;;
+                                esac
+
+                                sleep 10
+                            done
+                        '
+                    '''
+                }
+            }
+        }
 
         stage('Validate DEV') {
             steps {
                 container('tools') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-                    ]) {
-                            sh '''
-                                chmod +x scripts/smoke-test.sh
-                                scripts/smoke-test.sh dev
-                            '''
-                    }
+                    sh '''
+                        set -eu
+                        chmod +x scripts/smoke-test.sh
+                        scripts/smoke-test.sh dev
+                    '''
                 }
             }
         }
 
-
-        stage('Deploy STAGE') {
+        stage('Update STAGE Helm Values') {
             steps {
-                container('tools') {
+                container('yq') {
+                    sh '''
+                        set -eu
+
+                        yq -i \
+                          '.image.repository = strenv(ECR_REGISTRY)'\
+' + "/" + strenv(ECR_REPOSITORY)' \
+                          "${STAGE_VALUES_FILE}"
+
+                        yq -i \
+                          '.image.tag = strenv(IMAGE_TAG)' \
+                          "${STAGE_VALUES_FILE}"
+
+                        yq -i \
+                          '.image.pullPolicy = "IfNotPresent"' \
+                          "${STAGE_VALUES_FILE}"
+
+                        yq '.image' "${STAGE_VALUES_FILE}"
+                    '''
+                }
+            }
+        }
+
+        stage('Validate STAGE Helm Chart') {
+            steps {
+                container('helm') {
+                    sh '''
+                        set -eu
+
+                        helm lint "${HELM_CHART}" \
+                            -f "${STAGE_VALUES_FILE}"
+
+                        helm template "${STAGE_ARGO_APP}" \
+                            "${HELM_CHART}" \
+                            -f "${STAGE_VALUES_FILE}" \
+                            > rendered-stage.yaml
+
+                        grep -q '^kind: Rollout$' \
+                            rendered-stage.yaml
+
+                        grep -q "${IMAGE_TAG}" \
+                            rendered-stage.yaml
+                    '''
+                }
+            }
+        }
+
+        stage('Commit STAGE GitOps Change') {
+            steps {
+                container('jnlp') {
                     withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                        usernamePassword(
+                            credentialsId:
+                                "${GITHUB_CREDENTIALS_ID}",
+                            usernameVariable: 'GIT_USERNAME',
+                            passwordVariable: 'GIT_TOKEN'
+                        )
                     ]) {
                         sh '''
                             set -eu
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                create namespace "${STAGE_NAMESPACE}" \
-                                --dry-run=client \
-                                -o yaml |
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                apply -f -
+                            git add "${STAGE_VALUES_FILE}"
 
-                            sed \
-                                "s|IMAGE_URI_PLACEHOLDER|${IMAGE_URI}|g" \
-                                k8s/stage/deployment.yaml |
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                apply -f -
+                            if git diff --cached --quiet; then
+                                echo "No STAGE values change."
+                                exit 0
+                            fi
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                apply -f k8s/stage/service.yaml
+                            git commit \
+                                -m "Promote ${IMAGE_TAG} to stage [skip ci]"
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                rollout status \
-                                deployment/"${APP_NAME}" \
-                                --timeout=300s
+                            set +x
+
+                            git push origin HEAD:main
+
+                            set -x
                         '''
                     }
                 }
             }
         }
 
-        // stage('Validate STAGE') {
-        //     steps {
-        //         container('tools') {
-        //             withCredentials([
-        //                 [$class: 'AmazonWebServicesCredentialsBinding',
-        //                   credentialsId: 'aws-jenkins-credentials',
-        //                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-        //                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-        //             ]) {
-        //                 sh '''
-        //                     set -eu
+        stage('Argo CD Sync STAGE') {
+            steps {
+                container('argocd') {
+                    sh '''
+                        set -eu
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${STAGE_NAMESPACE}" \
-        //                         get deployments,pods,services -o wide
+                        argocd \
+                            --core \
+                            --kubeconfig "${KUBECONFIG}" \
+                            --namespace argocd \
+                            app sync "${STAGE_ARGO_APP}" \
+                            --prune \
+                            --timeout 300
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${STAGE_NAMESPACE}" \
-        //                         delete pod stage-smoke-test \
-        //                         --ignore-not-found=true
+                        argocd \
+                            --core \
+                            --kubeconfig "${KUBECONFIG}" \
+                            --namespace argocd \
+                            app wait "${STAGE_ARGO_APP}" \
+                            --sync \
+                            --health \
+                            --timeout 300
+                    '''
+                }
+            }
+        }
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${STAGE_NAMESPACE}" \
-        //                         run stage-smoke-test \
-        //                         --image=curlimages/curl:8.12.1 \
-        //                         --restart=Never \
-        //                         --rm \
-        //                         --attach \
-        //                         --command -- \
-        //                         curl \
-        //                         --fail \
-        //                         --silent \
-        //                         --show-error \
-        //                         --retry 10 \
-        //                         --retry-delay 5 \
-        //                         "http://${APP_NAME}/"
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Wait for STAGE Rollout') {
+            steps {
+                container('tools') {
+                    sh '''
+                        set -eu
+
+                        timeout 360 sh -c '
+                            while true; do
+                                IMAGE="$(
+                                    kubectl \
+                                      --kubeconfig \
+                                        "${KUBECONFIG}" \
+                                      -n "${STAGE_NAMESPACE}" \
+                                      get rollout \
+                                        "${STAGE_ROLLOUT}" \
+                                      -o jsonpath="{.spec.template.spec.containers[0].image}"
+                                )"
+
+                                PHASE="$(
+                                    kubectl \
+                                      --kubeconfig \
+                                        "${KUBECONFIG}" \
+                                      -n "${STAGE_NAMESPACE}" \
+                                      get rollout \
+                                        "${STAGE_ROLLOUT}" \
+                                      -o jsonpath="{.status.phase}"
+                                )"
+
+                                echo \
+                                  "STAGE image=${IMAGE}, phase=${PHASE}"
+
+                                case "${PHASE}" in
+                                    Healthy)
+                                        echo "${IMAGE}" |
+                                            grep -q \
+                                            ":${IMAGE_TAG}$"
+                                        exit 0
+                                        ;;
+                                    Degraded)
+                                        exit 1
+                                        ;;
+                                esac
+
+                                sleep 10
+                            done
+                        '
+                    '''
+                }
+            }
+        }
 
         stage('Validate STAGE') {
             steps {
                 container('tools') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-                    ]) {
-                            sh '''
-                                chmod +x scripts/smoke-test.sh
-                                scripts/smoke-test.sh stage
-                            '''
-                    }
+                    sh '''
+                        set -eu
+                        chmod +x scripts/smoke-test.sh
+                        scripts/smoke-test.sh stage
+                    '''
                 }
             }
         }
@@ -804,122 +989,187 @@ EOF
                     message: """
 STAGE deployment passed.
 
-Deploy image:
+Promote image:
 
 ${env.IMAGE_URI}
 
-to the production namespace on AWS EKS?
+to production through Helm and Argo CD?
 """,
-                    ok: 'Deploy to Production'
+                    ok: 'Promote to Production'
                 )
             }
         }
 
-        stage('Deploy PROD') {
+        stage('Update PROD Helm Values') {
             steps {
-                container('tools') {
+                container('yq') {
+                    sh '''
+                        set -eu
+
+                        yq -i \
+                          '.image.repository = strenv(ECR_REGISTRY)'\
+' + "/" + strenv(ECR_REPOSITORY)' \
+                          "${PROD_VALUES_FILE}"
+
+                        yq -i \
+                          '.image.tag = strenv(IMAGE_TAG)' \
+                          "${PROD_VALUES_FILE}"
+
+                        yq -i \
+                          '.image.pullPolicy = "IfNotPresent"' \
+                          "${PROD_VALUES_FILE}"
+
+                        yq '.image' "${PROD_VALUES_FILE}"
+                    '''
+                }
+            }
+        }
+
+        stage('Validate PROD Helm Chart') {
+            steps {
+                container('helm') {
+                    sh '''
+                        set -eu
+
+                        helm lint "${HELM_CHART}" \
+                            -f "${PROD_VALUES_FILE}"
+
+                        helm template "${PROD_ARGO_APP}" \
+                            "${HELM_CHART}" \
+                            -f "${PROD_VALUES_FILE}" \
+                            > rendered-prod.yaml
+
+                        grep -q '^kind: Rollout$' \
+                            rendered-prod.yaml
+
+                        grep -q "${IMAGE_TAG}" \
+                            rendered-prod.yaml
+                    '''
+                }
+            }
+        }
+
+        stage('Commit PROD GitOps Change') {
+            steps {
+                container('jnlp') {
                     withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                        usernamePassword(
+                            credentialsId:
+                                "${GITHUB_CREDENTIALS_ID}",
+                            usernameVariable: 'GIT_USERNAME',
+                            passwordVariable: 'GIT_TOKEN'
+                        )
                     ]) {
                         sh '''
                             set -eu
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                create namespace "${PROD_NAMESPACE}" \
-                                --dry-run=client \
-                                -o yaml |
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                apply -f -
+                            git add "${PROD_VALUES_FILE}"
 
-                            sed \
-                                "s|IMAGE_URI_PLACEHOLDER|${IMAGE_URI}|g" \
-                                k8s/prod/deployment.yaml |
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                apply -f -
+                            if git diff --cached --quiet; then
+                                echo "No PROD values change."
+                                exit 0
+                            fi
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                apply -f k8s/prod/service.yaml
+                            git commit \
+                                -m "Promote ${IMAGE_TAG} to prod [skip ci]"
 
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                rollout status \
-                                deployment/"${APP_NAME}" \
-                                --timeout=300s
+                            set +x
+
+                            git push origin HEAD:main
+
+                            set -x
                         '''
                     }
                 }
             }
         }
 
-        // stage('Validate PROD') {
-        //     steps {
-        //         container('tools') {
-        //             withCredentials([
-        //                 [$class: 'AmazonWebServicesCredentialsBinding',
-        //                   credentialsId: 'aws-jenkins-credentials',
-        //                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-        //                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-        //             ]) {
-        //                 sh '''
-        //                     set -eu
+        stage('Argo CD Sync PROD') {
+            steps {
+                container('argocd') {
+                    sh '''
+                        set -eu
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${PROD_NAMESPACE}" \
-        //                         get deployments,pods,services -o wide
+                        argocd \
+                            --core \
+                            --kubeconfig "${KUBECONFIG}" \
+                            --namespace argocd \
+                            app sync "${PROD_ARGO_APP}" \
+                            --prune \
+                            --timeout 300
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${PROD_NAMESPACE}" \
-        //                         delete pod prod-smoke-test \
-        //                         --ignore-not-found=true
+                        argocd \
+                            --core \
+                            --kubeconfig "${KUBECONFIG}" \
+                            --namespace argocd \
+                            app wait "${PROD_ARGO_APP}" \
+                            --sync \
+                            --health \
+                            --timeout 300
+                    '''
+                }
+            }
+        }
 
-        //                     kubectl \
-        //                         --kubeconfig "${KUBECONFIG}" \
-        //                         --namespace "${PROD_NAMESPACE}" \
-        //                         run prod-smoke-test \
-        //                         --image=curlimages/curl:8.12.1 \
-        //                         --restart=Never \
-        //                         --rm \
-        //                         --attach \
-        //                         --command -- \
-        //                         curl \
-        //                         --fail \
-        //                         --silent \
-        //                         --show-error \
-        //                         --retry 10 \
-        //                         --retry-delay 5 \
-        //                         "http://${APP_NAME}/"
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Wait for PROD Rollout') {
+            steps {
+                container('tools') {
+                    sh '''
+                        set -eu
+
+                        timeout 360 sh -c '
+                            while true; do
+                                IMAGE="$(
+                                    kubectl \
+                                      --kubeconfig \
+                                        "${KUBECONFIG}" \
+                                      -n "${PROD_NAMESPACE}" \
+                                      get rollout \
+                                        "${PROD_ROLLOUT}" \
+                                      -o jsonpath="{.spec.template.spec.containers[0].image}"
+                                )"
+
+                                PHASE="$(
+                                    kubectl \
+                                      --kubeconfig \
+                                        "${KUBECONFIG}" \
+                                      -n "${PROD_NAMESPACE}" \
+                                      get rollout \
+                                        "${PROD_ROLLOUT}" \
+                                      -o jsonpath="{.status.phase}"
+                                )"
+
+                                echo \
+                                  "PROD image=${IMAGE}, phase=${PHASE}"
+
+                                case "${PHASE}" in
+                                    Healthy)
+                                        echo "${IMAGE}" |
+                                            grep -q \
+                                            ":${IMAGE_TAG}$"
+                                        exit 0
+                                        ;;
+                                    Degraded)
+                                        exit 1
+                                        ;;
+                                esac
+
+                                sleep 10
+                            done
+                        '
+                    '''
+                }
+            }
+        }
 
         stage('Validate PROD') {
             steps {
                 container('tools') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-                    ]) {
-                            sh '''
-                                chmod +x scripts/smoke-test.sh
-                                scripts/smoke-test.sh prod
-                            '''
-                    }
+                    sh '''
+                        set -eu
+                        chmod +x scripts/smoke-test.sh
+                        scripts/smoke-test.sh prod
+                    '''
                 }
             }
         }
@@ -929,8 +1179,26 @@ to the production namespace on AWS EKS?
         success {
             echo 'Pipeline completed successfully.'
             echo "ECR image: ${env.IMAGE_URI}"
-            echo "Terraform changes detected: ${env.TERRAFORM_CHANGES}"
-            echo 'Deployed to AWS EKS: DEV, STAGE and PROD.'
+            echo "Terraform changes: ${env.TERRAFORM_CHANGES}"
+            echo '''
+The image was promoted through DEV, STAGE and PROD.
+
+Jenkins:
+- tested the application
+- managed Terraform
+- built the image with Kaniko
+- pushed it to Amazon ECR
+- scanned it with Trivy
+- validated the Helm chart
+- updated the environment values
+
+Argo CD:
+- rendered the Helm chart
+- synchronized the applications to Amazon EKS
+
+Argo Rollouts:
+- performed the canary deployments
+'''
         }
 
         failure {
@@ -939,7 +1207,7 @@ to the production namespace on AWS EKS?
 
         aborted {
             echo '''
-Pipeline was aborted, timed out, or production deployment
+Pipeline was aborted, timed out, or production promotion
 was not approved.
 '''
         }
@@ -947,7 +1215,9 @@ was not approved.
         always {
             archiveArtifacts(
                 artifacts:
-                    "${TERRAFORM_DIRECTORY}/${TERRAFORM_PLAN_TEXT}",
+                    "${TERRAFORM_DIRECTORY}/" +
+                    "${TERRAFORM_PLAN_TEXT}," +
+                    "rendered-*.yaml",
                 fingerprint: true,
                 allowEmptyArchive: true
             )
