@@ -125,11 +125,21 @@ def waitForRollout(String environmentName, String namespaceName, String rolloutN
 
 def smokeTest(String environmentName) {
     container('tools') {
-        sh """
-            set -eu
-            chmod +x scripts/smoke-test.sh
-            scripts/smoke-test.sh '${environmentName}'
-        """
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-jenkins-credentials',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+        ]) {
+            sh """
+                set -eu
+
+                aws sts get-caller-identity >/dev/null
+
+                chmod +x scripts/smoke-test.sh
+                scripts/smoke-test.sh dev
+            """
+        }
     }
 }
 
