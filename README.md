@@ -1,533 +1,264 @@
-# Final Project - CI/CD & GitOps Pipeline
-
-## Author
-
-Eshed Porat
-
----
-
-# Project Overview
-
-This project demonstrates a complete cloud-native CI/CD and GitOps workflow for a containerized Flask application running on Kubernetes.
-
-The application is a simple Flask web server that displays:
-
-```text
-Hello World
-```
-
-The solution implements:
-
-* Jenkins running inside Kubernetes
-* Docker image builds using Kaniko
-* Docker Hub image registry integration
-* Trivy vulnerability scanning
-* Helm-based application packaging
-* Multi-environment deployments (DEV, STAGE, PROD)
-* Manual promotion gates between environments
-* Argo Rollouts Canary deployments
-* Horizontal Pod Autoscaler (HPA)
-* GitOps-ready Argo CD application definitions
-
-At the end of the project, the application is successfully deployed and running in three independent Kubernetes environments:
-
-* DEV
-* STAGE
-* PROD
-
-using Helm, Argo Rollouts, and Jenkins-driven CI/CD automation.
-
----
-
-# Repository Structure
-
-```text
-Final-Project
-├── app/
-│   ├── app.py
-│   └── requirements
-│
-├── argocd/
-│   ├── apps/
-│   │   ├── dev.yaml
-│   │   ├── prod.yaml
-│   │   └── stage.yaml
-│   └── app-of-apps.yaml
-│
-├── environments/
-│   ├── dev/
-│   │   └── values.yaml
-│   ├── prod/
-│   │   └── values.yaml
-│   └── stage/
-│       └── values.yaml
-│
-├── helm/
-│   └── hello-world/
-│       ├── templates/
-│       │   ├── hpa.yaml
-│       │   ├── rollout.yaml
-│       │   └── service.yaml
-│       ├── Chart.yaml
-│       └── values.yaml
-│
-├── k8s/
-│   ├── deployment.yaml
-│   └── service.yaml
-│
-├── results/
-│   ├── advanced/
-│   │   ├── Pipeline Console Output.txt
-│   │   └── Pipeline Success.png
-│   │
-│   ├── k8s status/
-│   │   └── cluster-status.txt
-│   │
-│   └── mandatory/
-│       ├── Pipeline Console Output.txt
-│       └── Pipeline Success.png
-│
-├── Dockerfile
-├── Jenkinsfile
-└── README.md
-```
-
----
-
-# Application
-
-The application is written in Flask and serves a simple web page.
-
-Application source:
-
-```text
-app/app.py
-```
-
----
-
-# Mandatory Requirements
-
-## Source Control
-
-The complete project is stored in GitHub and includes:
-
-* Application source code
-* Dockerfile
-* Jenkinsfile
-* Kubernetes manifests
-* Helm chart
-* Environment configurations
-* Documentation
-
-Repository:
-
-```text
-https://github.com/OhWreckedcom10/Final-Project
-```
-
----
-
-## Jenkins CI/CD Pipeline
-
-The Jenkins pipeline is executed inside Kubernetes using dynamic Jenkins agent pods.
-
-Pipeline stages:
-
-1. Checkout source code from GitHub
-2. Build Docker image using Kaniko
-3. Push image to Docker Hub
-4. Perform Trivy security scanning
-5. Deploy to DEV environment
-6. Manual approval gate
-7. Deploy to STAGE environment
-8. Manual approval gate
-9. Deploy to PROD environment
-
-The deployment stages use Helm charts and environment-specific values files.
-
-The pipeline only proceeds to the next environment after successful deployment and manual approval.
-
-Pipeline definition:
-
-```text
-Jenkinsfile
-```
-
----
-
-## Docker Containerization
-
-The application is packaged as a Docker image.
-
-Docker build example:
-
-```bash
-docker build -t ohwrecked/final-project .
-```
-
-Docker run example:
-
-```bash
-docker run -p 5000:5000 ohwrecked/final-project
-```
-
-Docker Hub repository:
-
-```text
-ohwrecked/final-project
-```
-
----
-
-## Kubernetes Deployment
-
-The project contains standard Kubernetes manifests under:
-
-```text
-k8s/
-```
-
-Files:
-
-```text
-deployment.yaml
-service.yaml
-```
-
-The final deployment solution uses Helm and Argo Rollouts for progressive delivery.
-
-The deployment includes:
-
-* Multiple replicas
-* Resource requests
-* Resource limits
-* Kubernetes Services
-* Environment separation through namespaces
-
----
-
-# Advanced Requirements
-
-## Trivy Security Scanning
-
-The Jenkins pipeline performs container security scanning using Trivy before deployment.
-
-The scan is configured to fail the pipeline when CRITICAL application vulnerabilities are detected.
-
-Security scanning is performed automatically before deployment to any environment.
-
----
-
-## Helm
-
-The application is packaged as a Helm chart.
-
-Chart location:
-
-```text
-helm/hello-world
-```
-
-Files:
-
-```text
-Chart.yaml
-values.yaml
-templates/
-```
-
-Deployment example:
-
-```bash
-helm upgrade --install hello-world-dev \
-  helm/hello-world \
-  -f environments/dev/values.yaml \
-  -n dev --create-namespace
-```
-
----
-
-## Multi-Environment Configuration
-
-The repository contains configuration for three environments:
-
-```text
-environments/dev
-environments/stage
-environments/prod
-```
-
-The application is deployed into three independent Kubernetes namespaces:
-
-```text
-dev
-stage
-prod
-```
-
-Each environment uses a dedicated values file and defines:
-
-* Replica counts
-* Resource requests
-* Resource limits
-* Image configuration
-
-The environments are promoted through the Jenkins pipeline using manual approval gates.
-
----
-
-## Argo CD
-
-Argo CD application definitions are stored in:
-
-```text
-argocd/apps/
-```
-
-Files:
-
-```text
-dev.yaml
-stage.yaml
-prod.yaml
-```
-
-The repository also contains:
-
-```text
-argocd/app-of-apps.yaml
-```
-
-which implements the App-of-Apps pattern for GitOps deployments.
-
----
-
-## Argo Rollouts
-
-Canary deployment configuration is defined in:
-
-```text
-helm/hello-world/templates/rollout.yaml
-```
-
-The rollout performs progressive deployment using multiple rollout stages.
-
-Example rollout strategy:
-
-* 20% traffic shift
-* 50% traffic shift
-* 100% traffic shift
-
-Rollouts were successfully deployed and verified in:
-
-* DEV
-* STAGE
-* PROD
-
-environments.
-
----
-
-## Horizontal Pod Autoscaler
-
-The HPA configuration is defined in:
-
-```text
-helm/hello-world/templates/hpa.yaml
-```
-
-This enables automatic scaling of the application based on CPU utilization.
-
-HPAs were successfully deployed in:
-
-* DEV
-* STAGE
-* PROD
-
-environments.
-
----
-
-# Final Deployment State
-
-After successful pipeline execution, the application was deployed into three Kubernetes environments.
-
-| Environment | Namespace | Rollout | HPA | Pods |
-|------------|-----------|---------|-----|------|
-| DEV | dev | Enabled | Enabled | Running |
-| STAGE | stage | Enabled | Enabled | Running |
-| PROD | prod | Enabled | Enabled | Running |
-
-Each environment contains:
-
-* Argo Rollout resource
-* Kubernetes Service
-* Horizontal Pod Autoscaler
-* Running application Pods
-
-Deployment status was validated using Kubernetes commands and stored in:
-
-```text
-results/k8s status/cluster-status.txt
-```
-
----
-
-# Deployment Instructions
-
-## Clone Repository
-
-```bash
-git clone https://github.com/OhWreckedcom10/Final-Project.git
-cd Final-Project
-```
-
-## Build Docker Image
-
-```bash
-docker build -t ohwrecked/final-project .
-```
-
-## Deploy Using Helm
-
-DEV:
-
-```bash
-helm upgrade --install hello-world-dev \
-  helm/hello-world \
-  -f environments/dev/values.yaml \
-  -n dev --create-namespace
-```
-
-STAGE:
-
-```bash
-helm upgrade --install hello-world-stage \
-  helm/hello-world \
-  -f environments/stage/values.yaml \
-  -n stage --create-namespace
-```
-
-PROD:
-
-```bash
-helm upgrade --install hello-world-prod \
-  helm/hello-world \
-  -f environments/prod/values.yaml \
-  -n prod --create-namespace
-```
-
----
-
-# Challenges Encountered During Implementation
-
-During the implementation of the project, several technical challenges were encountered and resolved.
-
-The first challenge was deploying Jenkins inside Kubernetes. Jenkins was initially unavailable after cluster reconfiguration and had to be reinstalled and reconfigured. Additional troubleshooting was required to restore agent connectivity, Kubernetes integration, and Docker Hub authentication.
-
-A second challenge involved building Docker images from within Jenkins running inside Kubernetes. Since Docker was not available inside the Jenkins agent containers, the solution was migrated to Kaniko, which allows container image builds without requiring a Docker daemon.
-
-Authentication with Docker Hub also required additional configuration. Jenkins was initially unable to push images because the Docker Hub credentials and Kubernetes secrets were not correctly configured. This was resolved by creating and mounting Docker registry secrets that Kaniko could consume during image builds.
-
-Several deployment issues were encountered during Kubernetes rollouts. New application versions occasionally failed to start correctly, causing deployments to exceed their rollout deadlines. Investigation of pod logs revealed application dependency issues, including missing Flask packages inside generated container images. The Dockerfile and build process were updated until the image was built consistently and deployed successfully.
-
-Security scanning with Trivy introduced another challenge. Initial scans failed because the selected base images contained multiple CRITICAL operating system vulnerabilities. Different base images were evaluated and the Trivy configuration was adjusted to focus on application dependency vulnerabilities while still enforcing security controls in the CI/CD pipeline.
-
-Additional troubleshooting was required when deploying Helm releases. Some releases entered a failed state due to namespace conflicts, missing permissions, service conflicts, and missing Argo Rollouts controllers after namespace cleanup. RBAC permissions were updated, controllers were reinstalled, and Helm releases were redeployed until all environments became healthy.
-
-Throughout the project, Kubernetes logs, Jenkins console output, Helm validation commands, Docker image inspection, rollout monitoring, and Trivy scan results were used extensively to identify and resolve issues. These troubleshooting activities provided valuable hands-on experience with CI/CD pipelines, Kubernetes operations, GitOps workflows, progressive delivery, container security, and multi-environment deployment strategies.
-
----
-
-# Results
-
-The repository contains evidence demonstrating successful completion of the project requirements.
-
-## Mandatory Requirements
-
-Location:
-
-```text
-results/mandatory/
-```
-
-Contains:
-
-* Pipeline Success Screenshot
-* Pipeline Console Output
-
-These files demonstrate successful completion of the mandatory CI/CD requirements.
-
----
-
-## Advanced Requirements
-
-Location:
-
-```text
-results/advanced/
-```
-
-Contains:
-
-* Pipeline Success Screenshot
-* Pipeline Console Output
-
-These files demonstrate successful completion of the advanced CI/CD and GitOps requirements.
-
----
-
-## Kubernetes Environment Status
-
-Location:
-
-```text
-results/k8s status/
-```
-
-Contains:
-
-* cluster-status.txt
-
-This file contains the final Kubernetes deployment status after pipeline execution, including:
-
-* DEV environment resources
-* STAGE environment resources
-* PROD environment resources
-* Argo Rollouts
-* Running Pods
-* Services
-* Horizontal Pod Autoscalers
-
-The status output verifies that all environments were deployed successfully and were running with healthy replicas.
-
----
-
-# Architecture
-
-```text
-GitHub
+# 🚀 Final Project -- Cloud-Native CI/CD, GitOps & Infrastructure as Code
+
+**Author:** Eshed Porat
+
+![AWS](https://img.shields.io/badge/AWS-EKS-orange)
+![Terraform](https://img.shields.io/badge/IaC-Terraform-623CE4)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-1.36-326CE5)
+![Jenkins](https://img.shields.io/badge/CI-Jenkins-D24939)
+![ArgoCD](https://img.shields.io/badge/GitOps-ArgoCD-EF7B4D)
+![Helm](https://img.shields.io/badge/Helm-v3-0F1689)
+
+------------------------------------------------------------------------
+
+# 📖 Project Overview
+
+This project demonstrates a complete **enterprise-style cloud-native
+DevOps platform** that automates the entire software delivery
+lifecycle---from infrastructure provisioning to production deployment.
+
+The solution combines **Infrastructure as Code (Terraform)**,
+**Continuous Integration (Jenkins)**, **GitOps (Argo CD)** and
+**Progressive Delivery (Argo Rollouts)** to deploy a containerized Flask
+application into **Amazon EKS**.
+
+## Key Features
+
+-   Terraform Infrastructure as Code
+-   Hybrid Kubernetes Architecture
+-   Amazon EKS
+-   Jenkins CI/CD
+-   Kaniko container builds
+-   Trivy image scanning
+-   Docker Hub integration
+-   Helm packaging
+-   GitOps with Argo CD
+-   Canary deployments with Argo Rollouts
+-   Horizontal Pod Autoscaler
+-   DEV / STAGE / PROD environments
+
+------------------------------------------------------------------------
+
+# 🏗 Architecture
+
+``` text
+Developer
+    │
+    ▼
+GitHub Repository
+    │
+    ▼
+────────────────── On-Prem Kubernetes ──────────────────
+
+ Jenkins Controller
+ Jenkins Agent Pods
+ Kaniko
+ Trivy
+
+──────────────────────┬────────────────────────
+                       │
+                 Docker Hub
+                       │
+                GitOps Update
+                       │
+                       ▼
+
+──────────────────── AWS Cloud ─────────────────────────
+
+Terraform
    │
    ▼
-Jenkins CI/CD
-   │
-   ├── Kaniko Build
-   ├── Trivy Security Scan
-   └── Docker Hub Push
+AWS VPC • IAM • Security Groups
    │
    ▼
-Helm Deployment
+Amazon EKS
+(Managed Control Plane)
    │
-   ├──────────────┬──────────────┬──────────────┐
-   ▼              ▼              ▼
- DEV           STAGE           PROD
-   │              │              │
-   ▼              ▼              ▼
-Rollout       Rollout        Rollout
-HPA           HPA            HPA
-Service       Service        Service
-Pods          Pods           Pods
+   ▼
+3 EC2 Worker Nodes
+   │
+   ▼
+Argo CD
+Argo Rollouts
+   │
+   ▼
+DEV      STAGE      PROD
 ```
 
----
+------------------------------------------------------------------------
+
+# ☁ Hybrid Kubernetes Architecture
+
+## On-Premises Cluster (k3s)
+
+The first Kubernetes cluster is hosted on-premises and is dedicated to
+the Continuous Integration platform.
+
+It hosts:
+
+-   Jenkins Controller
+-   Dynamic Jenkins Agent Pods
+-   Kaniko
+-   Trivy
+
+Responsibilities include:
+
+-   Building Docker images
+-   Vulnerability scanning
+-   Updating the GitOps repository
+-   Orchestrating deployments
+
+------------------------------------------------------------------------
+
+## AWS Cloud Cluster
+
+The production platform is hosted on **Amazon Elastic Kubernetes Service
+(EKS)**.
+
+Terraform provisions the complete cloud infrastructure including:
+
+-   Amazon VPC
+-   IAM Roles
+-   Security Groups
+-   Amazon EKS
+-   Managed Node Group
+-   **3 EC2 Worker Nodes**
+-   Elastic Load Balancer
+
+Inside the cluster are:
+
+-   Argo CD
+-   Argo Rollouts
+-   CoreDNS
+-   kube-proxy
+-   Metrics Server
+-   AWS VPC CNI
+
+The application is deployed into three isolated namespaces:
+
+-   DEV
+-   STAGE
+-   PROD
+
+Each namespace contains:
+
+-   Deployment / Rollout
+-   Kubernetes Service
+-   HPA
+-   Dedicated configuration
+
+------------------------------------------------------------------------
+
+# 🏗 Terraform Infrastructure
+
+Terraform provisions the AWS infrastructure.
+
+Resources include:
+
+-   VPC
+-   Networking
+-   Security Groups
+-   IAM
+-   Amazon EKS
+-   Worker Nodes
+
+Workflow:
+
+``` bash
+terraform init
+terraform plan
+terraform apply
+```
+
+------------------------------------------------------------------------
+
+# ⚙ CI/CD Pipeline
+
+1.  Checkout source
+2.  Build image using Kaniko
+3.  Trivy security scan
+4.  Push image to Docker Hub
+5.  Update Helm values
+6.  Commit GitOps changes
+7.  Push to GitHub
+8.  Argo CD synchronization
+9.  Deploy DEV
+10. Smoke Test
+11. Deploy STAGE
+12. Smoke Test
+13. Manual Approval
+14. Deploy PROD
+15. Smoke Test
+
+------------------------------------------------------------------------
+
+# 🔄 GitOps Workflow
+
+Jenkins never deploys directly to Kubernetes.
+
+Instead it updates the GitOps repository.
+
+Argo CD continuously monitors Git and synchronizes the desired state to
+Amazon EKS.
+
+Argo Rollouts performs progressive canary deployments.
+
+------------------------------------------------------------------------
+
+# ☸ Kubernetes Deployment
+
+Deployment technologies:
+
+-   Helm
+-   Argo CD
+-   Argo Rollouts
+-   HPA
+-   Kubernetes Services
+-   Namespaces
+
+------------------------------------------------------------------------
+
+# 🔒 Security
+
+Security controls include:
+
+-   Trivy image scanning
+-   IAM Roles
+-   Security Groups
+-   Kubernetes namespaces
+-   GitOps deployment model
+
+------------------------------------------------------------------------
+
+# 📊 Final Environment
+
+  Environment   Namespace   Status
+  ------------- ----------- ---------
+  DEV           dev         Healthy
+  STAGE         stage       Healthy
+  PROD          prod        Healthy
+
+------------------------------------------------------------------------
+
+# ⚠ Challenges
+
+Highlights:
+
+-   Kaniko container builds
+-   Terraform provisioning
+-   Amazon EKS networking
+-   Docker Hub authentication
+-   Argo CD synchronization timing
+-   Kubernetes Service selector troubleshooting
+-   AWS Load Balancer configuration
+-   Multi-environment GitOps deployment
+
+------------------------------------------------------------------------
+
+# 🚀 Future Improvements
+
+-   Monitoring with Prometheus & Grafana
+-   Automated rollback policies
+-   TLS with cert-manager
+-   External Secrets
+-   Automated integration testing

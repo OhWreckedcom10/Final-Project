@@ -1,0 +1,1435 @@
+Started by user Jenkins Admin
+Obtained Jenkinsfile from git https://github.com/OhWreckedcom10/Final-Project.git
+[Pipeline] Start of Pipeline
+[Pipeline] podTemplate
+[Pipeline] {
+[Pipeline] node
+Created Pod: kubernetes jenkins/final-project-80-s7rv1-vlzsh-0q4w2
+[PodInfo] jenkins/final-project-80-s7rv1-vlzsh-0q4w2
+	Container [helm] waiting [ContainerCreating] No message
+	Container [jnlp] waiting [ContainerCreating] No message
+	Container [kaniko] waiting [ContainerCreating] No message
+	Container [python] waiting [ContainerCreating] No message
+	Container [terraform] waiting [ContainerCreating] No message
+	Container [tools] waiting [ContainerCreating] No message
+	Container [trivy] waiting [ContainerCreating] No message
+	Container [yq] waiting [ContainerCreating] No message
+	Pod [Pending][ContainersNotReady] containers with unready status: [python terraform tools helm yq kaniko trivy jnlp]
+Agent final-project-80-s7rv1-vlzsh-0q4w2 is provisioned from template Final-Project_80-s7rv1-vlzsh
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  annotations:
+    kubernetes.jenkins.io/last-refresh: "1784391163562"
+    buildUrl: "http://jenkins.jenkins.svc.cluster.local:8080/job/Final-Project/80/"
+    runUrl: "job/Final-Project/80/"
+  labels:
+    jenkins/jenkins-jenkins-agent: "true"
+    jenkins/label-digest: "58a0f0f296e4efce28e1a8e77ad59e55f863ea93"
+    jenkins/label: "Final-Project_80-s7rv1"
+    kubernetes.jenkins.io/controller: "http___jenkins_jenkins_svc_cluster_local_8080x"
+  name: "final-project-80-s7rv1-vlzsh-0q4w2"
+  namespace: "jenkins"
+spec:
+  containers:
+  - args:
+    - "cat"
+    command:
+    - "/bin/sh"
+    - "-c"
+    image: "python:3.11-slim"
+    name: "python"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "cat"
+    command:
+    - "/bin/sh"
+    - "-c"
+    env:
+    - name: "TF_IN_AUTOMATION"
+      value: "true"
+    - name: "TF_INPUT"
+      value: "false"
+    - name: "TF_PLUGIN_CACHE_DIR"
+      value: "/terraform-cache"
+    image: "hashicorp/terraform:1.15.8"
+    name: "terraform"
+    tty: true
+    volumeMounts:
+    - mountPath: "/terraform-cache"
+      name: "terraform-cache"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "cat"
+    command:
+    - "/bin/sh"
+    - "-c"
+    image: "alpine/k8s:1.31.10"
+    name: "tools"
+    tty: true
+    volumeMounts:
+    - mountPath: "/workspace-kube"
+      name: "kubeconfig"
+    - mountPath: "/kaniko/.docker"
+      name: "kaniko-config"
+    - mountPath: "/ecr-auth"
+      name: "ecr-auth"
+    - mountPath: "/custom-tools"
+      name: "tools-bin"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "cat"
+    command:
+    - "/bin/sh"
+    - "-c"
+    image: "alpine/helm:3.17.3"
+    name: "helm"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "cat"
+    command:
+    - "/bin/sh"
+    - "-c"
+    image: "mikefarah/yq:4.53.2"
+    name: "yq"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "cat"
+    command:
+    - "/busybox/sh"
+    - "-c"
+    image: "gcr.io/kaniko-project/executor:v1.23.2-debug"
+    name: "kaniko"
+    tty: true
+    volumeMounts:
+    - mountPath: "/kaniko/.docker"
+      name: "kaniko-config"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "cat"
+    command:
+    - "/bin/sh"
+    - "-c"
+    image: "aquasec/trivy:0.61.1"
+    name: "trivy"
+    tty: true
+    volumeMounts:
+    - mountPath: "/ecr-auth"
+      name: "ecr-auth"
+    - mountPath: "/root/.cache/trivy"
+      name: "trivy-cache"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - env:
+    - name: "JENKINS_SECRET"
+      value: "********"
+    - name: "JENKINS_TUNNEL"
+      value: "jenkins-agent.jenkins.svc.cluster.local:50000"
+    - name: "JENKINS_AGENT_NAME"
+      value: "final-project-80-s7rv1-vlzsh-0q4w2"
+    - name: "REMOTING_OPTS"
+      value: "-noReconnectAfter 1d"
+    - name: "JENKINS_NAME"
+      value: "final-project-80-s7rv1-vlzsh-0q4w2"
+    - name: "JENKINS_AGENT_WORKDIR"
+      value: "/home/jenkins/agent"
+    - name: "JENKINS_URL"
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+    image: "jenkins/inbound-agent:3383.vc8881d4b_0e76-1-jdk25"
+    name: "jnlp"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  nodeSelector:
+    kubernetes.io/os: "linux"
+  restartPolicy: "Never"
+  volumes:
+  - emptyDir: {}
+    name: "ecr-auth"
+  - emptyDir: {}
+    name: "kaniko-config"
+  - emptyDir: {}
+    name: "terraform-cache"
+  - emptyDir: {}
+    name: "tools-bin"
+  - emptyDir:
+      medium: ""
+    name: "workspace-volume"
+  - emptyDir: {}
+    name: "trivy-cache"
+  - emptyDir: {}
+    name: "kubeconfig"
+
+Running on final-project-80-s7rv1-vlzsh-0q4w2 in /home/jenkins/agent/workspace/Final-Project
+[Pipeline] {
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] timeout
+Timeout set to expire in 1 hr 30 min
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] retry
+[Pipeline] {
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+Warning: JENKINS-30600: special launcher org.csanchez.jenkins.plugins.kubernetes.pipeline.ContainerExecDecorator$1@33db4f4e; decorates org.csanchez.jenkins.plugins.kubernetes.pipeline.ContainerExecDecorator$1@16e179; decorates RemoteLauncher[hudson.remoting.Channel@39e12255:JNLP4-connect connection from 10.42.0.136/10.42.0.136:33984] will be ignored (a typical symptom is the Git executable not being run inside a designated container)
+Cloning the remote Git repository
+Cloning repository https://github.com/OhWreckedcom10/Final-Project.git
+ > git init /home/jenkins/agent/workspace/Final-Project # timeout=10
+Fetching upstream changes from https://github.com/OhWreckedcom10/Final-Project.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/OhWreckedcom10/Final-Project.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+Checking out Revision 66e7509720419f6697fcf2c7ce23a6f014786271 (refs/remotes/origin/main)
+Commit message: "Fix Kaniko container shell"
+ > git config remote.origin.url https://github.com/OhWreckedcom10/Final-Project.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 66e7509720419f6697fcf2c7ce23a6f014786271 # timeout=10
+ > git rev-list --no-walk 3f29152271fefb46f40fcde7a729f5b9c4a83439 # timeout=10
+[Pipeline] }
+[Pipeline] // retry
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ git rev-parse --short=8 HEAD
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] echo
+Commit: 66e75097
+[Pipeline] echo
+Image: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Test Application)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ python3 -m venv .venv
++ . .venv/bin/activate
++ deactivate nondestructive
++ [ -n  ]
++ [ -n  ]
++ hash -r
++ [ -n  ]
++ unset VIRTUAL_ENV
++ unset VIRTUAL_ENV_PROMPT
++ [ ! nondestructive = nondestructive ]
++ VIRTUAL_ENV=/home/jenkins/agent/workspace/Final-Project/.venv
++ export VIRTUAL_ENV
++ _OLD_VIRTUAL_PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ PATH=/home/jenkins/agent/workspace/Final-Project/.venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ export PATH
++ [ -n  ]
++ [ -z  ]
++ _OLD_VIRTUAL_PS1=# 
++ PS1=(.venv) # 
++ export PS1
++ VIRTUAL_ENV_PROMPT=(.venv) 
++ export VIRTUAL_ENV_PROMPT
++ hash -r
++ python -m pip install --upgrade pip
+Requirement already satisfied: pip in ./.venv/lib/python3.11/site-packages (24.0)
+Collecting pip
+  Downloading pip-26.1.2-py3-none-any.whl.metadata (4.6 kB)
+Downloading pip-26.1.2-py3-none-any.whl (1.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 5.8 MB/s eta 0:00:00
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 24.0
+    Uninstalling pip-24.0:
+      Successfully uninstalled pip-24.0
+Successfully installed pip-26.1.2
++ pip install -r app/requirements
+Collecting flask (from -r app/requirements (line 1))
+  Downloading flask-3.1.3-py3-none-any.whl.metadata (3.2 kB)
+Collecting blinker>=1.9.0 (from flask->-r app/requirements (line 1))
+  Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+Collecting click>=8.1.3 (from flask->-r app/requirements (line 1))
+  Downloading click-8.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting itsdangerous>=2.2.0 (from flask->-r app/requirements (line 1))
+  Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+Collecting jinja2>=3.1.2 (from flask->-r app/requirements (line 1))
+  Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting markupsafe>=2.1.1 (from flask->-r app/requirements (line 1))
+  Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Collecting werkzeug>=3.1.0 (from flask->-r app/requirements (line 1))
+  Downloading werkzeug-3.1.8-py3-none-any.whl.metadata (4.0 kB)
+Downloading flask-3.1.3-py3-none-any.whl (103 kB)
+Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+Downloading click-8.4.2-py3-none-any.whl (119 kB)
+Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Downloading werkzeug-3.1.8-py3-none-any.whl (226 kB)
+Installing collected packages: markupsafe, itsdangerous, click, blinker, werkzeug, jinja2, flask
+
+Successfully installed blinker-1.9.0 click-8.4.2 flask-3.1.3 itsdangerous-2.2.0 jinja2-3.1.6 markupsafe-3.0.3 werkzeug-3.1.8
++ python -
+Status code: 200
+Response: <h1>Hello World</h1>
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify AWS Access)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
+{
+    "UserId": "AIDAX3NCWCL6P6H2U4XSO",
+    "Account": "539896451836",
+    "Arn": "arn:aws:iam::539896451836:user/jenkins-final-project"
+}
++ aws ecr describe-repositories --repository-names final-project --region il-central-1 --query 'repositories[0].repositoryUri' --output text
+539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
++ aws eks describe-cluster --name final-project --region il-central-1 --query cluster.status --output text
+ACTIVE
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Install Argo CD CLI)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ uname -m
++ ARCH=x86_64
++ ARGO_ARCH=amd64
++ wget -q -O /custom-tools/argocd https://github.com/argoproj/argo-cd/releases/download/v3.0.6/argocd-linux-amd64
++ chmod 0755 /custom-tools/argocd
++ /custom-tools/argocd version --client
+argocd: v3.0.6+db93798
+  BuildDate: 2025-06-09T22:03:15Z
+  GitCommit: db93798d6643a565c056c6fda453e696719dbe12
+  GitTreeState: clean
+  GoVersion: go1.24.4
+  Compiler: gc
+  Platform: linux/amd64
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Terraform Format)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] dir
+Running in /home/jenkins/agent/workspace/Final-Project/terraform
+[Pipeline] {
+[Pipeline] sh
++ terraform fmt -check -recursive
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Terraform Init and Validate)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] dir
+Running in /home/jenkins/agent/workspace/Final-Project/terraform
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ terraform init '-input=false' -no-color
+Initializing the backend...
+
+Successfully configured the backend "s3"! Terraform will automatically
+use this backend unless the backend configuration changes.
+
+Initializing provider plugins...
+- Reusing previous version of hashicorp/aws from the dependency lock file
+- Installing hashicorp/aws v6.55.0...
+- Installed hashicorp/aws v6.55.0 (signed by HashiCorp)
+
+Terraform has made some changes to the provider dependency selections recorded
+in the .terraform.lock.hcl file. Review those changes and commit them to your
+version control system if they represent changes you intended to make.
+
+Terraform has been successfully initialized!
++ terraform validate -no-color
+Success! The configuration is valid.
+
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Terraform State Safety Check)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] dir
+Running in /home/jenkins/agent/workspace/Final-Project/terraform
+[Pipeline] {
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ terraform state list
+[Pipeline] fileExists
+[Pipeline] readFile
+[Pipeline] echo
+Terraform-managed resources:
+data.aws_eks_cluster.existing
+aws_ecr_lifecycle_policy.application
+aws_ecr_repository.application
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Terraform Plan)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] dir
+Running in /home/jenkins/agent/workspace/Final-Project/terraform
+[Pipeline] {
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ terraform plan '-input=false' -no-color -detailed-exitcode '-out=tfplan'
+data.aws_eks_cluster.existing: Reading...
+aws_ecr_repository.application: Refreshing state... [id=final-project]
+data.aws_eks_cluster.existing: Read complete after 0s [id=final-project]
+aws_ecr_lifecycle_policy.application: Refreshing state... [id=final-project]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+[Pipeline] sh
++ terraform show -no-color tfplan
++ cat tfplan.txt
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] archiveArtifacts
+Archiving artifacts
+Recording fingerprints
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Terraform Apply)
+Stage "Terraform Apply" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Configure ECR Authentication)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ set +x
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build and Push Image)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ /kaniko/executor '--context=/home/jenkins/agent/workspace/Final-Project' '--dockerfile=/home/jenkins/agent/workspace/Final-Project/Dockerfile' '--destination=539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097' '--snapshot-mode=redo' '--image-download-retry=3' '--push-retry=3' '--cache=true' '--cache-ttl=24h'
+[36mINFO[0m[0000] Resolved base name python:3.11-alpine to builder 
+[36mINFO[0m[0000] Retrieving image manifest python:3.11-alpine 
+[36mINFO[0m[0000] Retrieving image python:3.11-alpine from registry index.docker.io 
+[36mINFO[0m[0001] Retrieving image manifest python:3.11-alpine 
+[36mINFO[0m[0001] Returning cached image manifest              
+[36mINFO[0m[0002] Retrieving image manifest gcr.io/distroless/python3-debian13:nonroot 
+[36mINFO[0m[0002] Retrieving image gcr.io/distroless/python3-debian13:nonroot from registry gcr.io 
+[36mINFO[0m[0004] Retrieving image manifest gcr.io/distroless/python3-debian13:nonroot 
+[36mINFO[0m[0004] Returning cached image manifest              
+[36mINFO[0m[0005] Built cross stage deps: map[0:[/python /app/app.py]] 
+[36mINFO[0m[0005] Retrieving image manifest python:3.11-alpine 
+[36mINFO[0m[0005] Returning cached image manifest              
+[36mINFO[0m[0005] Retrieving image manifest python:3.11-alpine 
+[36mINFO[0m[0005] Returning cached image manifest              
+[36mINFO[0m[0005] Executing 0 build triggers                   
+[36mINFO[0m[0005] Building stage 'python:3.11-alpine' [idx: '0', base-idx: '-1'] 
+[36mINFO[0m[0005] Checking for cached layer 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project/cache:7b5dc1849f929f1df83ee3934a27b2ccd74ce0aae597d53cf9def7ac224e1cc2... 
+[36mINFO[0m[0006] No cached layer found for cmd RUN pip install --no-cache-dir     --target=/python     flask 
+[36mINFO[0m[0006] Unpacking rootfs as cmd RUN pip install --no-cache-dir     --target=/python     flask requires it. 
+[36mINFO[0m[0007] WORKDIR /app                                 
+[36mINFO[0m[0007] Cmd: workdir                                 
+[36mINFO[0m[0007] Changed working directory to /app            
+[36mINFO[0m[0007] Creating directory /app with uid -1 and gid -1 
+[36mINFO[0m[0007] Taking snapshot of files...                  
+[36mINFO[0m[0007] RUN pip install --no-cache-dir     --target=/python     flask 
+[36mINFO[0m[0007] Initializing snapshotter ...                 
+[36mINFO[0m[0007] Taking snapshot of full filesystem...        
+[36mINFO[0m[0007] Cmd: /bin/sh                                 
+[36mINFO[0m[0007] Args: [-c pip install --no-cache-dir     --target=/python     flask] 
+[36mINFO[0m[0007] Running: [/bin/sh -c pip install --no-cache-dir     --target=/python     flask] 
+Collecting flask
+  Downloading flask-3.1.3-py3-none-any.whl.metadata (3.2 kB)
+Collecting blinker>=1.9.0 (from flask)
+  Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+Collecting click>=8.1.3 (from flask)
+  Downloading click-8.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting itsdangerous>=2.2.0 (from flask)
+  Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+Collecting jinja2>=3.1.2 (from flask)
+  Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting markupsafe>=2.1.1 (from flask)
+  Downloading markupsafe-3.0.3-cp311-cp311-musllinux_1_2_x86_64.whl.metadata (2.7 kB)
+Collecting werkzeug>=3.1.0 (from flask)
+  Downloading werkzeug-3.1.8-py3-none-any.whl.metadata (4.0 kB)
+Downloading flask-3.1.3-py3-none-any.whl (103 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 103.4/103.4 kB 1.2 MB/s eta 0:00:00
+Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+Downloading click-8.4.2-py3-none-any.whl (119 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 119.2/119.2 kB 4.5 MB/s eta 0:00:00
+Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 kB 7.2 MB/s eta 0:00:00
+Downloading markupsafe-3.0.3-cp311-cp311-musllinux_1_2_x86_64.whl (22 kB)
+Downloading werkzeug-3.1.8-py3-none-any.whl (226 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 226.5/226.5 kB 8.2 MB/s eta 0:00:00
+Installing collected packages: markupsafe, itsdangerous, click, blinker, werkzeug, jinja2, flask
+Successfully installed blinker-1.9.0 click-8.4.2 flask-3.1.3 itsdangerous-2.2.0 jinja2-3.1.6 markupsafe-3.0.3 werkzeug-3.1.8
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 26.1.2
+[notice] To update, run: pip install --upgrade pip
+[36mINFO[0m[0011] Taking snapshot of full filesystem...        
+[36mINFO[0m[0012] Pushing layer 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project/cache:7b5dc1849f929f1df83ee3934a27b2ccd74ce0aae597d53cf9def7ac224e1cc2 to cache now 
+[36mINFO[0m[0012] COPY app/app.py .                            
+[36mINFO[0m[0012] Pushing image to 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project/cache:7b5dc1849f929f1df83ee3934a27b2ccd74ce0aae597d53cf9def7ac224e1cc2 
+[36mINFO[0m[0012] Taking snapshot of files...                  
+[33mWARN[0m[0012] Retrying operation after 1s due to POST https://539896451836.dkr.ecr.il-central-1.amazonaws.com/v2/final-project/cache/blobs/uploads/: NAME_UNKNOWN: The repository with name 'final-project/cache' does not exist in the registry with id '539896451836' 
+[33mWARN[0m[0013] Retrying operation after 2s due to POST https://539896451836.dkr.ecr.il-central-1.amazonaws.com/v2/final-project/cache/blobs/uploads/: NAME_UNKNOWN: The repository with name 'final-project/cache' does not exist in the registry with id '539896451836' 
+[33mWARN[0m[0015] Retrying operation after 4s due to POST https://539896451836.dkr.ecr.il-central-1.amazonaws.com/v2/final-project/cache/blobs/uploads/: NAME_UNKNOWN: The repository with name 'final-project/cache' does not exist in the registry with id '539896451836' 
+[33mWARN[0m[0020] Error uploading layer to cache: failed to push to destination 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project/cache:7b5dc1849f929f1df83ee3934a27b2ccd74ce0aae597d53cf9def7ac224e1cc2: POST https://539896451836.dkr.ecr.il-central-1.amazonaws.com/v2/final-project/cache/blobs/uploads/: NAME_UNKNOWN: The repository with name 'final-project/cache' does not exist in the registry with id '539896451836' 
+[36mINFO[0m[0020] Saving file python for later use             
+[36mINFO[0m[0020] Saving file app/app.py for later use         
+[36mINFO[0m[0020] Deleting filesystem...                       
+[36mINFO[0m[0020] Retrieving image manifest gcr.io/distroless/python3-debian13:nonroot 
+[36mINFO[0m[0020] Returning cached image manifest              
+[36mINFO[0m[0020] Retrieving image manifest gcr.io/distroless/python3-debian13:nonroot 
+[36mINFO[0m[0020] Returning cached image manifest              
+[36mINFO[0m[0020] Executing 0 build triggers                   
+[36mINFO[0m[0020] Building stage 'gcr.io/distroless/python3-debian13:nonroot' [idx: '1', base-idx: '-1'] 
+[36mINFO[0m[0020] Cmd: EXPOSE                                  
+[36mINFO[0m[0020] Adding exposed port: 5000/tcp                
+[36mINFO[0m[0020] Unpacking rootfs as cmd COPY --from=builder /python /python requires it. 
+[36mINFO[0m[0060] WORKDIR /app                                 
+[36mINFO[0m[0060] Cmd: workdir                                 
+[36mINFO[0m[0060] Changed working directory to /app            
+[36mINFO[0m[0060] Creating directory /app with uid 65532 and gid 65532 
+[36mINFO[0m[0060] Taking snapshot of files...                  
+[36mINFO[0m[0060] COPY --from=builder /python /python          
+[36mINFO[0m[0060] Taking snapshot of files...                  
+[36mINFO[0m[0060] COPY --from=builder /app/app.py .            
+[36mINFO[0m[0060] Taking snapshot of files...                  
+[36mINFO[0m[0060] ENV PYTHONPATH=/python                       
+[36mINFO[0m[0060] No files changed in this command, skipping snapshotting. 
+[36mINFO[0m[0060] EXPOSE 5000                                  
+[36mINFO[0m[0060] Cmd: EXPOSE                                  
+[36mINFO[0m[0060] Adding exposed port: 5000/tcp                
+[36mINFO[0m[0060] No files changed in this command, skipping snapshotting. 
+[36mINFO[0m[0060] CMD ["app.py"]                               
+[36mINFO[0m[0060] No files changed in this command, skipping snapshotting. 
+[36mINFO[0m[0060] Pushing image to 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097 
+[36mINFO[0m[0061] Pushed 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project@sha256:df10b7fc6bb6e52a3a88590924d9be42b5fddb5d95e10fb22aee67a2f06f8df4 
++ echo 'Image pushed:'
+Image pushed:
++ echo 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097
+539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Trivy Scan)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ set +x
+2026-07-18T16:14:46Z	INFO	[vulndb] Need to update DB
+2026-07-18T16:14:46Z	INFO	[vulndb] Downloading vulnerability DB...
+2026-07-18T16:14:46Z	INFO	[vulndb] Downloading artifact...	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-07-18T16:15:02Z	INFO	[vulndb] Artifact successfully downloaded	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-07-18T16:15:02Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-07-18T16:15:15Z	INFO	Detected OS	family="debian" version="13.6"
+2026-07-18T16:15:15Z	INFO	[debian] Detecting vulnerabilities...	os_version="13" pkg_num=37
+2026-07-18T16:15:15Z	INFO	Number of language-specific files	num=1
+2026-07-18T16:15:15Z	INFO	[python-pkg] Detecting vulnerabilities...
+2026-07-18T16:15:15Z	WARN	Using severities from other vendors for some vulnerabilities. Read https://trivy.dev/v0.61/docs/scanner/vulnerability#severity-selection for details.
+
+Report Summary
+
+┌───────────────────────────────────────────────────────────────────────────┬────────────┬─────────────────┐
+│                                  Target                                   │    Type    │ Vulnerabilities │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097 │   debian   │        0        │
+│ (debian 13.6)                                                             │            │                 │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/blinker-1.9.0.dist-info/METADATA                                   │ python-pkg │        0        │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/click-8.4.2.dist-info/METADATA                                     │ python-pkg │        0        │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/flask-3.1.3.dist-info/METADATA                                     │ python-pkg │        0        │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/itsdangerous-2.2.0.dist-info/METADATA                              │ python-pkg │        0        │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/jinja2-3.1.6.dist-info/METADATA                                    │ python-pkg │        0        │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/markupsafe-3.0.3.dist-info/METADATA                                │ python-pkg │        0        │
+├───────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┤
+│ python/werkzeug-3.1.8.dist-info/METADATA                                  │ python-pkg │        0        │
+└───────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Configure EKS Access)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ dirname /workspace-kube/config
++ mkdir -p /workspace-kube
++ aws eks update-kubeconfig --name final-project --region il-central-1 --kubeconfig /workspace-kube/config
+Added new context arn:aws:eks:il-central-1:539896451836:cluster/final-project to /workspace-kube/config
++ chmod 600 /workspace-kube/config
++ kubectl config set-context --current '--namespace=argocd'
+Context "arn:aws:eks:il-central-1:539896451836:cluster/final-project" modified.
++ echo 'Current Kubernetes context:'
+Current Kubernetes context:
++ kubectl config current-context
+arn:aws:eks:il-central-1:539896451836:cluster/final-project
++ echo 'Current Kubernetes namespace:'
+Current Kubernetes namespace:
++ kubectl config view --minify -o 'jsonpath={..namespace}'
+argocd+ echo
+
++ kubectl get nodes -o wide
+NAME                                             STATUS   ROLES    AGE     VERSION               INTERNAL-IP     EXTERNAL-IP    OS-IMAGE                        KERNEL-VERSION                           CONTAINER-RUNTIME
+ip-172-31-16-157.il-central-1.compute.internal   Ready    <none>   4h58m   v1.36.2-eks-8f14419   172.31.16.157   51.17.99.95    Amazon Linux 2023.12.20260710   6.18.36-69.138.amzn2023.x86_64 (amd64)   containerd://2.2.4+unknown
+ip-172-31-2-200.il-central-1.compute.internal    Ready    <none>   5h31m   v1.36.2-eks-8f14419   172.31.2.200    51.16.11.171   Amazon Linux 2023.12.20260710   6.18.36-69.138.amzn2023.x86_64 (amd64)   containerd://2.2.4+unknown
+ip-172-31-39-82.il-central-1.compute.internal    Ready    <none>   5h30m   v1.36.2-eks-8f14419   172.31.39.82    51.85.32.43    Amazon Linux 2023.12.20260710   6.18.36-69.138.amzn2023.x86_64 (amd64)   containerd://2.2.4+unknown
++ kubectl get configmap argocd-cm
+NAME        DATA   AGE
+argocd-cm   9      6h45m
++ kubectl get applications
+NAME                  SYNC STATUS   HEALTH STATUS
+final-project-apps    Synced        Healthy
+final-project-dev     Synced        Healthy
+final-project-prod    Synced        Healthy
+final-project-stage   Synced        Progressing
++ /custom-tools/argocd login --core
+Context 'kubernetes' updated
++ /custom-tools/argocd app list
+NAME                        CLUSTER                         NAMESPACE  PROJECT  STATUS  HEALTH       SYNCPOLICY  CONDITIONS  REPO                                                 PATH              TARGET
+argocd/final-project-apps   https://kubernetes.default.svc  argocd     default  Synced  Healthy      Auto-Prune  <none>      https://github.com/OhWreckedcom10/Final-Project.git  argocd/apps       main
+argocd/final-project-dev    https://kubernetes.default.svc  dev        default  Synced  Healthy      Auto-Prune  <none>      https://github.com/OhWreckedcom10/Final-Project.git  helm/hello-world  main
+argocd/final-project-prod   https://kubernetes.default.svc  prod       default  Synced  Healthy      Auto-Prune  <none>      https://github.com/OhWreckedcom10/Final-Project.git  helm/hello-world  main
+argocd/final-project-stage  https://kubernetes.default.svc  stage      default  Synced  Progressing  Auto-Prune  <none>      https://github.com/OhWreckedcom10/Final-Project.git  helm/hello-world  main
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy DEV through Helm and Argo CD)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ yq -i '.image.repository = strenv(IMAGE_REPOSITORY)' environments/dev/values.yaml
++ yq -i '.image.tag = strenv(IMAGE_TAG)' environments/dev/values.yaml
++ yq -i '.image.pullPolicy = "IfNotPresent"' environments/dev/values.yaml
++ yq .image environments/dev/values.yaml
+tag: "80-66e75097"
+repository: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
+pullPolicy: IfNotPresent
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ helm lint helm/hello-world -f environments/dev/values.yaml
+==> Linting helm/hello-world
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
++ helm template final-project-dev helm/hello-world -f environments/dev/values.yaml
++ grep -q '^kind: Rollout$' rendered-dev.yaml
++ grep -q 80-66e75097 rendered-dev.yaml
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ git config user.name Jenkins GitOps
++ git config user.email jenkins@final-project.local
++ git add environments/dev/values.yaml
++ git diff --cached --quiet
++ git commit -m Deploy 80-66e75097 to dev [skip ci]
+[detached HEAD 24cb6c7] Deploy 80-66e75097 to dev [skip ci]
+ 1 file changed, 1 insertion(+), 1 deletion(-)
++ set +x
+To https://github.com/OhWreckedcom10/Final-Project.git
+   66e7509..24cb6c7  HEAD -> main
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ /custom-tools/argocd app get final-project-dev --hard-refresh
+Name:               argocd/final-project-dev
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          dev
+URL:                http://localhost:45561/applications/final-project-dev
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/dev/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        OutOfSync from main (24cb6c7)
+Health Status:      Healthy
+
+GROUP        KIND                     NAMESPACE  NAME                       STATUS     HEALTH  HOOK  MESSAGE
+             Service                  dev        final-project-dev-service  Synced                   
+argoproj.io  Rollout                  dev        final-project-dev          OutOfSync                
+autoscaling  HorizontalPodAutoscaler  dev        final-project-dev-hpa      Synced                   
++ /custom-tools/argocd app sync final-project-dev --prune --timeout 300
+TIMESTAMP                  GROUP              KIND                NAMESPACE                  NAME         STATUS   HEALTH          HOOK  MESSAGE
+2026-07-18T16:15:32+00:00                  Service                      dev  final-project-dev-service    Synced  Healthy                
+2026-07-18T16:15:32+00:00  argoproj.io     Rollout                      dev     final-project-dev         Synced  Suspended              
+2026-07-18T16:15:32+00:00  autoscaling  HorizontalPodAutoscaler         dev  final-project-dev-hpa        Synced  Healthy                
+2026-07-18T16:15:33+00:00                  Service                      dev  final-project-dev-service    Synced  Healthy                service/final-project-dev-service unchanged
+2026-07-18T16:15:33+00:00  autoscaling  HorizontalPodAutoscaler         dev  final-project-dev-hpa        Synced  Healthy                horizontalpodautoscaler.autoscaling/final-project-dev-hpa unchanged
+2026-07-18T16:15:33+00:00  argoproj.io     Rollout                      dev     final-project-dev         Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+
+Name:               argocd/final-project-dev
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          dev
+URL:                http://localhost:39975/applications/final-project-dev
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/dev/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to main (24cb6c7)
+Health Status:      Suspended
+
+Operation:          Sync
+Sync Revision:      24cb6c73b0083fa7fdda76801ab00d505f3d974b
+Phase:              Succeeded
+Start:              2026-07-18 16:15:32 +0000 UTC
+Finished:           2026-07-18 16:15:33 +0000 UTC
+Duration:           1s
+Message:            successfully synced (all tasks run)
+
+GROUP        KIND                     NAMESPACE  NAME                       STATUS  HEALTH  HOOK  MESSAGE
+             Service                  dev        final-project-dev-service  Synced                service/final-project-dev-service unchanged
+autoscaling  HorizontalPodAutoscaler  dev        final-project-dev-hpa      Synced                horizontalpodautoscaler.autoscaling/final-project-dev-hpa unchanged
+argoproj.io  Rollout                  dev        final-project-dev          Synced                rollout.argoproj.io/final-project-dev configured
++ /custom-tools/argocd app wait final-project-dev --sync --health --timeout 300
+TIMESTAMP                  GROUP              KIND                NAMESPACE                  NAME         STATUS   HEALTH          HOOK  MESSAGE
+2026-07-18T16:15:35+00:00                  Service                      dev  final-project-dev-service    Synced  Healthy                service/final-project-dev-service unchanged
+2026-07-18T16:15:35+00:00  autoscaling  HorizontalPodAutoscaler         dev  final-project-dev-hpa        Synced  Healthy                horizontalpodautoscaler.autoscaling/final-project-dev-hpa unchanged
+2026-07-18T16:15:35+00:00  argoproj.io     Rollout                      dev     final-project-dev         Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:15:53+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:15:53+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:15:54+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:15:54+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:15:54+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:02+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:02+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:09+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:09+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:09+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:24+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:24+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:24+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:24+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Suspended              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:32+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:39+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:42+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:16:54+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:17:24+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Healthy              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:17:36+00:00  argoproj.io     Rollout         dev     final-project-dev  OutOfSync  Progressing              rollout.argoproj.io/final-project-dev configured
+2026-07-18T16:17:36+00:00  argoproj.io     Rollout         dev     final-project-dev    Synced  Healthy              rollout.argoproj.io/final-project-dev configured
+
+Name:               argocd/final-project-dev
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          dev
+URL:                http://localhost:37945/applications/final-project-dev
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/dev/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to main (24cb6c7)
+Health Status:      Healthy
+
+
+GROUP        KIND                     NAMESPACE  NAME                       STATUS  HEALTH  HOOK  MESSAGE
+argoproj.io  Rollout                  dev        final-project-dev          Synced                rollout.argoproj.io/final-project-dev configured
+             Service                  dev        final-project-dev-service  Synced                
+autoscaling  HorizontalPodAutoscaler  dev        final-project-dev-hpa      Synced                
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ timeout 420 sh -c '
+                    while true; do
+                        IMAGE=$(kubectl -n "dev"                             get rollout "final-project-dev"                             -o jsonpath="{.spec.template.spec.containers[0].image}")
+
+                        PHASE=$(kubectl -n "dev"                             get rollout "final-project-dev"                             -o jsonpath="{.status.phase}")
+
+                        echo "DEV image=${IMAGE}, phase=${PHASE}"
+
+                        if [ "${PHASE}" = "Healthy" ]; then
+                            echo "${IMAGE}" | grep -q ":80-66e75097$"
+                            exit 0
+                        fi
+
+                        if [ "${PHASE}" = "Degraded" ]; then
+                            kubectl -n "dev" describe rollout "final-project-dev"
+                            exit 1
+                        fi
+
+                        sleep 10
+                    done
+                '
+DEV image=539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097, phase=Healthy
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ chmod +x scripts/smoke-test.sh
++ SERVICE_NAME=final-project-dev-service scripts/smoke-test.sh dev
+========================================
+Smoke test
+Namespace: dev
+Service:   http://final-project-dev-service/
+Pod:       dev-smoke-test-80
+========================================
+Cleaning up smoke-test pod...
+pod/dev-smoke-test-80 created
+Waiting for smoke-test pod to complete...
+Smoke-test pod phase: Pending
+Smoke-test pod phase: Succeeded
+Smoke-test output:
+<h1>Hello World</h1>
+Smoke test passed for dev.
+Cleaning up smoke-test pod...
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy STAGE through Helm and Argo CD)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ yq -i '.image.repository = strenv(IMAGE_REPOSITORY)' environments/stage/values.yaml
++ yq -i '.image.tag = strenv(IMAGE_TAG)' environments/stage/values.yaml
++ yq -i '.image.pullPolicy = "IfNotPresent"' environments/stage/values.yaml
++ yq .image environments/stage/values.yaml
+tag: "80-66e75097"
+repository: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
+pullPolicy: IfNotPresent
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ helm lint helm/hello-world -f environments/stage/values.yaml
+==> Linting helm/hello-world
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
++ helm template final-project-stage helm/hello-world -f environments/stage/values.yaml
++ grep -q '^kind: Rollout$' rendered-stage.yaml
++ grep -q 80-66e75097 rendered-stage.yaml
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ git config user.name Jenkins GitOps
++ git config user.email jenkins@final-project.local
++ git add environments/stage/values.yaml
++ git diff --cached --quiet
++ git commit -m Promote 80-66e75097 to stage [skip ci]
+[detached HEAD c7d3d52] Promote 80-66e75097 to stage [skip ci]
+ 1 file changed, 1 insertion(+), 1 deletion(-)
++ set +x
+To https://github.com/OhWreckedcom10/Final-Project.git
+   24cb6c7..c7d3d52  HEAD -> main
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ /custom-tools/argocd app get final-project-stage --hard-refresh
+Name:               argocd/final-project-stage
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          stage
+URL:                http://localhost:44323/applications/final-project-stage
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/stage/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        OutOfSync from main (c7d3d52)
+Health Status:      Healthy
+
+GROUP        KIND                     NAMESPACE  NAME                         STATUS     HEALTH  HOOK  MESSAGE
+             Service                  stage      final-project-stage-service  Synced                   
+argoproj.io  Rollout                  stage      final-project-stage          OutOfSync                
+autoscaling  HorizontalPodAutoscaler  stage      final-project-stage-hpa      Synced                   
++ /custom-tools/argocd app sync final-project-stage --prune --timeout 300
+TIMESTAMP                  GROUP              KIND                NAMESPACE                  NAME           STATUS   HEALTH          HOOK  MESSAGE
+2026-07-18T16:17:56+00:00                  Service                    stage  final-project-stage-service    Synced  Healthy                
+2026-07-18T16:17:56+00:00  argoproj.io     Rollout                    stage   final-project-stage           Synced  Suspended              
+2026-07-18T16:17:56+00:00  autoscaling  HorizontalPodAutoscaler       stage  final-project-stage-hpa        Synced  Healthy                
+2026-07-18T16:17:57+00:00                  Service                    stage  final-project-stage-service    Synced  Healthy                service/final-project-stage-service unchanged
+2026-07-18T16:17:57+00:00  autoscaling  HorizontalPodAutoscaler       stage  final-project-stage-hpa        Synced  Healthy                horizontalpodautoscaler.autoscaling/final-project-stage-hpa unchanged
+2026-07-18T16:17:57+00:00  argoproj.io     Rollout                    stage   final-project-stage           Synced  Suspended              rollout.argoproj.io/final-project-stage configured
+
+Name:               argocd/final-project-stage
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          stage
+URL:                http://localhost:35581/applications/final-project-stage
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/stage/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to main (c7d3d52)
+Health Status:      Suspended
+
+Operation:          Sync
+Sync Revision:      c7d3d52ceffeeecd2804005298cc020dfa074fbe
+Phase:              Succeeded
+Start:              2026-07-18 16:17:56 +0000 UTC
+Finished:           2026-07-18 16:17:57 +0000 UTC
+Duration:           1s
+Message:            successfully synced (all tasks run)
+
+GROUP        KIND                     NAMESPACE  NAME                         STATUS  HEALTH  HOOK  MESSAGE
+             Service                  stage      final-project-stage-service  Synced                service/final-project-stage-service unchanged
+autoscaling  HorizontalPodAutoscaler  stage      final-project-stage-hpa      Synced                horizontalpodautoscaler.autoscaling/final-project-stage-hpa unchanged
+argoproj.io  Rollout                  stage      final-project-stage          Synced                rollout.argoproj.io/final-project-stage configured
++ /custom-tools/argocd app wait final-project-stage --sync --health --timeout 300
+TIMESTAMP                  GROUP              KIND                NAMESPACE                  NAME           STATUS   HEALTH          HOOK  MESSAGE
+2026-07-18T16:17:59+00:00                  Service                    stage  final-project-stage-service    Synced  Healthy                service/final-project-stage-service unchanged
+2026-07-18T16:17:59+00:00  autoscaling  HorizontalPodAutoscaler       stage  final-project-stage-hpa        Synced  Healthy                horizontalpodautoscaler.autoscaling/final-project-stage-hpa unchanged
+2026-07-18T16:17:59+00:00  argoproj.io     Rollout                    stage   final-project-stage           Synced  Suspended              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:10+00:00  argoproj.io     Rollout       stage   final-project-stage  OutOfSync  Suspended              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:11+00:00  argoproj.io     Rollout       stage   final-project-stage    Synced  Suspended              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:25+00:00  argoproj.io     Rollout       stage   final-project-stage    Synced  Progressing              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:25+00:00  argoproj.io     Rollout       stage   final-project-stage  OutOfSync  Progressing              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:26+00:00  argoproj.io     Rollout       stage   final-project-stage  OutOfSync  Suspended              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:26+00:00  argoproj.io     Rollout       stage   final-project-stage  OutOfSync  Progressing              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:26+00:00  argoproj.io     Rollout       stage   final-project-stage    Synced  Suspended              rollout.argoproj.io/final-project-stage configured
+2026-07-18T16:18:55+00:00  argoproj.io     Rollout       stage   final-project-stage    Synced  Progressing              rollout.argoproj.io/final-project-stage configured
+
+Name:               argocd/final-project-stage
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          stage
+URL:                http://localhost:40509/applications/final-project-stage
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/stage/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to main (c7d3d52)
+Health Status:      Healthy
+
+
+GROUP        KIND                     NAMESPACE  NAME                         STATUS  HEALTH  HOOK  MESSAGE
+argoproj.io  Rollout                  stage      final-project-stage          Synced                rollout.argoproj.io/final-project-stage configured
+             Service                  stage      final-project-stage-service  Synced                
+autoscaling  HorizontalPodAutoscaler  stage      final-project-stage-hpa      Synced                
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ timeout 420 sh -c '
+                    while true; do
+                        IMAGE=$(kubectl -n "stage"                             get rollout "final-project-stage"                             -o jsonpath="{.spec.template.spec.containers[0].image}")
+
+                        PHASE=$(kubectl -n "stage"                             get rollout "final-project-stage"                             -o jsonpath="{.status.phase}")
+
+                        echo "STAGE image=${IMAGE}, phase=${PHASE}"
+
+                        if [ "${PHASE}" = "Healthy" ]; then
+                            echo "${IMAGE}" | grep -q ":80-66e75097$"
+                            exit 0
+                        fi
+
+                        if [ "${PHASE}" = "Degraded" ]; then
+                            kubectl -n "stage" describe rollout "final-project-stage"
+                            exit 1
+                        fi
+
+                        sleep 10
+                    done
+                '
+STAGE image=539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097, phase=Healthy
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ chmod +x scripts/smoke-test.sh
++ SERVICE_NAME=final-project-stage-service scripts/smoke-test.sh stage
+========================================
+Smoke test
+Namespace: stage
+Service:   http://final-project-stage-service/
+Pod:       stage-smoke-test-80
+========================================
+Cleaning up smoke-test pod...
+pod/stage-smoke-test-80 created
+Waiting for smoke-test pod to complete...
+Smoke-test pod phase: Pending
+Smoke-test pod phase: Succeeded
+Smoke-test output:
+<h1>Hello World</h1>
+Smoke test passed for stage.
+Cleaning up smoke-test pod...
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Approve Production)
+[Pipeline] timeout
+Timeout set to expire in 15 min
+[Pipeline] {
+[Pipeline] input
+STAGE passed. Promote 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097 to production?
+Promote to Production or Abort
+Approved by Jenkins Admin
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy PROD through Helm and Argo CD)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ yq -i '.image.repository = strenv(IMAGE_REPOSITORY)' environments/prod/values.yaml
++ yq -i '.image.tag = strenv(IMAGE_TAG)' environments/prod/values.yaml
++ yq -i '.image.pullPolicy = "IfNotPresent"' environments/prod/values.yaml
++ yq .image environments/prod/values.yaml
+tag: "80-66e75097"
+repository: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
+pullPolicy: IfNotPresent
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ helm lint helm/hello-world -f environments/prod/values.yaml
+==> Linting helm/hello-world
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
++ helm template final-project-prod helm/hello-world -f environments/prod/values.yaml
++ grep -q '^kind: Rollout$' rendered-prod.yaml
++ grep -q 80-66e75097 rendered-prod.yaml
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ git config user.name Jenkins GitOps
++ git config user.email jenkins@final-project.local
++ git add environments/prod/values.yaml
++ git diff --cached --quiet
++ git commit -m Promote 80-66e75097 to prod [skip ci]
+[detached HEAD 5cd04da] Promote 80-66e75097 to prod [skip ci]
+ 1 file changed, 1 insertion(+), 1 deletion(-)
++ set +x
+To https://github.com/OhWreckedcom10/Final-Project.git
+   c7d3d52..5cd04da  HEAD -> main
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ /custom-tools/argocd app get final-project-prod --hard-refresh
+Name:               argocd/final-project-prod
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          prod
+URL:                http://localhost:38705/applications/final-project-prod
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/prod/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        OutOfSync from main (5cd04da)
+Health Status:      Healthy
+
+GROUP        KIND                     NAMESPACE  NAME                        STATUS     HEALTH  HOOK  MESSAGE
+             Service                  prod       final-project-prod-service  Synced                   
+argoproj.io  Rollout                  prod       final-project-prod          OutOfSync                
+autoscaling  HorizontalPodAutoscaler  prod       final-project-prod-hpa      Synced                   
++ /custom-tools/argocd app sync final-project-prod --prune --timeout 300
+TIMESTAMP                  GROUP              KIND                NAMESPACE                  NAME          STATUS   HEALTH          HOOK  MESSAGE
+2026-07-18T16:19:23+00:00  argoproj.io     Rollout                     prod    final-project-prod          Synced  Suspended              
+2026-07-18T16:19:23+00:00  autoscaling  HorizontalPodAutoscaler        prod  final-project-prod-hpa        Synced  Healthy                
+2026-07-18T16:19:23+00:00                  Service                     prod  final-project-prod-service    Synced  Healthy                
+2026-07-18T16:19:23+00:00                  Service                     prod  final-project-prod-service    Synced  Healthy                service/final-project-prod-service unchanged
+2026-07-18T16:19:23+00:00  autoscaling  HorizontalPodAutoscaler        prod  final-project-prod-hpa        Synced  Healthy                horizontalpodautoscaler.autoscaling/final-project-prod-hpa unchanged
+2026-07-18T16:19:23+00:00  argoproj.io     Rollout                     prod    final-project-prod          Synced  Suspended              rollout.argoproj.io/final-project-prod configured
+
+Name:               argocd/final-project-prod
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          prod
+URL:                http://localhost:36781/applications/final-project-prod
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/prod/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to main (5cd04da)
+Health Status:      Suspended
+
+Operation:          Sync
+Sync Revision:      5cd04da74e8286a6811b720f72c6d47acf0e9e11
+Phase:              Succeeded
+Start:              2026-07-18 16:19:23 +0000 UTC
+Finished:           2026-07-18 16:19:23 +0000 UTC
+Duration:           0s
+Message:            successfully synced (all tasks run)
+
+GROUP        KIND                     NAMESPACE  NAME                        STATUS  HEALTH  HOOK  MESSAGE
+             Service                  prod       final-project-prod-service  Synced                service/final-project-prod-service unchanged
+autoscaling  HorizontalPodAutoscaler  prod       final-project-prod-hpa      Synced                horizontalpodautoscaler.autoscaling/final-project-prod-hpa unchanged
+argoproj.io  Rollout                  prod       final-project-prod          Synced                rollout.argoproj.io/final-project-prod configured
++ /custom-tools/argocd app wait final-project-prod --sync --health --timeout 300
+TIMESTAMP                  GROUP              KIND                NAMESPACE                  NAME          STATUS   HEALTH          HOOK  MESSAGE
+2026-07-18T16:19:26+00:00                  Service                     prod  final-project-prod-service    Synced  Healthy                service/final-project-prod-service unchanged
+2026-07-18T16:19:26+00:00  autoscaling  HorizontalPodAutoscaler        prod  final-project-prod-hpa        Synced  Healthy                horizontalpodautoscaler.autoscaling/final-project-prod-hpa unchanged
+2026-07-18T16:19:26+00:00  argoproj.io     Rollout                     prod    final-project-prod          Synced  Suspended              rollout.argoproj.io/final-project-prod configured
+2026-07-18T16:19:51+00:00  argoproj.io     Rollout        prod    final-project-prod    Synced  Progressing              rollout.argoproj.io/final-project-prod configured
+2026-07-18T16:19:51+00:00  argoproj.io     Rollout        prod    final-project-prod    Synced  Suspended              rollout.argoproj.io/final-project-prod configured
+2026-07-18T16:20:21+00:00  argoproj.io     Rollout        prod    final-project-prod    Synced  Progressing              rollout.argoproj.io/final-project-prod configured
+
+Name:               argocd/final-project-prod
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          prod
+URL:                http://localhost:34203/applications/final-project-prod
+Source:
+- Repo:             https://github.com/OhWreckedcom10/Final-Project.git
+  Target:           main
+  Path:             helm/hello-world
+  Helm Values:      ../../environments/prod/values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to main (5cd04da)
+Health Status:      Healthy
+
+
+GROUP        KIND                     NAMESPACE  NAME                        STATUS  HEALTH   HOOK  MESSAGE
+             Service                  prod       final-project-prod-service  Synced  Healthy        service/final-project-prod-service unchanged
+autoscaling  HorizontalPodAutoscaler  prod       final-project-prod-hpa      Synced  Healthy        horizontalpodautoscaler.autoscaling/final-project-prod-hpa unchanged
+argoproj.io  Rollout                  prod       final-project-prod          Synced  Healthy        rollout.argoproj.io/final-project-prod configured
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ timeout 420 sh -c '
+                    while true; do
+                        IMAGE=$(kubectl -n "prod"                             get rollout "final-project-prod"                             -o jsonpath="{.spec.template.spec.containers[0].image}")
+
+                        PHASE=$(kubectl -n "prod"                             get rollout "final-project-prod"                             -o jsonpath="{.status.phase}")
+
+                        echo "PROD image=${IMAGE}, phase=${PHASE}"
+
+                        if [ "${PHASE}" = "Healthy" ]; then
+                            echo "${IMAGE}" | grep -q ":80-66e75097$"
+                            exit 0
+                        fi
+
+                        if [ "${PHASE}" = "Degraded" ]; then
+                            kubectl -n "prod" describe rollout "final-project-prod"
+                            exit 1
+                        fi
+
+                        sleep 10
+                    done
+                '
+PROD image=539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097, phase=Healthy
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $AWS_ACCESS_KEY_ID or $AWS_SECRET_ACCESS_KEY
+[Pipeline] {
+[Pipeline] sh
++ set -eu
++ aws sts get-caller-identity
++ chmod +x scripts/smoke-test.sh
++ SERVICE_NAME=final-project-prod-service scripts/smoke-test.sh prod
+========================================
+Smoke test
+Namespace: prod
+Service:   http://final-project-prod-service/
+Pod:       prod-smoke-test-80
+========================================
+Cleaning up smoke-test pod...
+pod/prod-smoke-test-80 created
+Waiting for smoke-test pod to complete...
+Smoke-test pod phase: Pending
+Smoke-test pod phase: Succeeded
+Smoke-test output:
+<h1>Hello World</h1>
+Smoke test passed for prod.
+Cleaning up smoke-test pod...
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] archiveArtifacts
+Archiving artifacts
+Recording fingerprints
+[Pipeline] echo
+Build result: SUCCESS
+[Pipeline] echo
+Pipeline completed successfully. Promoted image: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project:80-66e75097
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // podTemplate
+[Pipeline] End of Pipeline
+Finished: SUCCESS
