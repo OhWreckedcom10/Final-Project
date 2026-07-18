@@ -297,13 +297,6 @@ The Load Balancer exposes the application externally and distributes requests th
 │
 ├── Jenkinsfile
 │
-├── docs/
-│   ├── FULL_DOCUMENTATION.md
-│   ├── ARCHITECTURE.md
-│   ├── PIPELINE.md
-│   ├── TROUBLESHOOTING.md
-│   └── screenshots/
-│
 └── README.md
 ```
 
