@@ -58,12 +58,12 @@ def syncArgoApplication(String applicationName) {
     container('tools') {
         sh """
             set -eu
-            /custom-tools/argocd --core --namespace argocd \
+            argocd --core --namespace argocd \
                 app sync '${applicationName}' \
                 --prune \
                 --timeout 300
 
-            /custom-tools/argocd --core --namespace argocd \
+            argocd --core --namespace argocd \
                 app wait '${applicationName}' \
                 --sync \
                 --health \
@@ -177,8 +177,11 @@ spec:
 
     - name: kaniko
       image: gcr.io/kaniko-project/executor:v1.23.2-debug
-      command: ["/busybox/sh", "-c"]
-      args: ["cat"]
+      command:
+        - /busybox/sh
+        - -c
+      args:
+        - cat
       tty: true
       volumeMounts:
         - name: kaniko-config
@@ -252,7 +255,6 @@ spec:
 
         KUBECONFIG = '/workspace-kube/config'
         ARGOCD_VERSION = 'v3.0.6'
-        PATH = "/custom-tools:${env.PATH}"
 
         // This matches the credential ID currently shown in your Jenkins UI.
         GITHUB_CREDENTIALS_ID = 'github-credetials'
@@ -593,7 +595,7 @@ JSON
                             chmod 600 "${KUBECONFIG}"
                             kubectl get nodes -o wide
                             kubectl get applications -n argocd
-                            /custom-tools/argocd --core --namespace argocd app list
+                            argocd --core --namespace argocd app list
                         '''
                     }
                 }
