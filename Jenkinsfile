@@ -17,7 +17,7 @@ def validateHelmChart(String releaseName, String valuesFile, String renderedFile
             helm lint \"${HELM_CHART}\" -f '${valuesFile}'
             helm template '${releaseName}' \"${HELM_CHART}\" \
                 -f '${valuesFile}' > '${renderedFile}'
-            grep -q '^kind: Rollout$' '${renderedFile}'
+            grep -q '^kind: Rollout\$' '${renderedFile}'
             grep -q \"${IMAGE_TAG}\" '${renderedFile}'
         """
     }
