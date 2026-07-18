@@ -317,35 +317,6 @@ The Load Balancer exposes the application externally and distributes requests th
 
 ---
 
-## 📸 Screenshots
-
-Add screenshots from the live environment under `docs/screenshots/`.
-
-| Component | Suggested file |
-|---|---|
-| Terraform Apply | `docs/screenshots/terraform-apply.png` |
-| Amazon EKS | `docs/screenshots/eks-cluster.png` |
-| Jenkins Pipeline | `docs/screenshots/jenkins-pipeline.png` |
-| Docker Hub | `docs/screenshots/docker-hub.png` |
-| Argo CD | `docs/screenshots/argocd.png` |
-| Argo Rollouts | `docs/screenshots/argo-rollouts.png` |
-| Kubernetes Pods | `docs/screenshots/pods.png` |
-| HPA | `docs/screenshots/hpa.png` |
-| Running Application | `docs/screenshots/application.png` |
-
----
-
-## 📚 Documentation
-
-Detailed implementation, architecture, troubleshooting, security, and deployment explanations are available in:
-
-- **[Full Project Documentation](docs/FULL_DOCUMENTATION.md)**
-- **[Architecture Guide](docs/ARCHITECTURE.md)**
-- **[CI/CD Pipeline Guide](docs/PIPELINE.md)**
-- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)**
-
----
-
 ## 🎯 Learning Outcomes
 
 This project demonstrates practical experience with:
