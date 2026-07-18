@@ -252,7 +252,7 @@ spec:
         ARGOCD_VERSION = 'v3.0.6'
 
         // This matches the credential ID currently shown in your Jenkins UI.
-        GITHUB_CREDENTIALS_ID = 'github-credetials'
+        GITHUB_CREDENTIALS_ID = 'github-credentials'
         GIT_REPOSITORY = 'github.com/OhWreckedcom10/Final-Project.git'
         GIT_BRANCH = 'main'
     }
