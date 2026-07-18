@@ -123,21 +123,22 @@ def waitForRollout(String environmentName, String namespaceName, String rolloutN
     }
 }
 
-def smokeTest(String environmentName) {
+def runSmokeTest(String environmentName) {
     container('tools') {
         withCredentials([
             [$class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-jenkins-credentials',
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+              credentialsId: 'aws-jenkins-credentials',
+              accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+              secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
         ]) {
             sh """
                 set -eu
 
                 aws sts get-caller-identity >/dev/null
-
                 chmod +x scripts/smoke-test.sh
-                scripts/smoke-test.sh dev
+
+                SERVICE_NAME="final-project-${environmentName}-service" \
+                scripts/smoke-test.sh "${environmentName}"
             """
         }
     }
@@ -653,7 +654,7 @@ JSON
                     )
                     syncArgoApplication(env.DEV_ARGO_APP)
                     waitForRollout('DEV', env.DEV_NAMESPACE, env.DEV_ROLLOUT)
-                    smokeTest('dev')
+                    runSmokeTest('dev')
                 }
             }
         }
@@ -669,7 +670,7 @@ JSON
                     )
                     syncArgoApplication(env.STAGE_ARGO_APP)
                     waitForRollout('STAGE', env.STAGE_NAMESPACE, env.STAGE_ROLLOUT)
-                    smokeTest('stage')
+                    runSmokeTest('stage')
                 }
             }
         }
@@ -697,7 +698,7 @@ JSON
                     )
                     syncArgoApplication(env.PROD_ARGO_APP)
                     waitForRollout('PROD', env.PROD_NAMESPACE, env.PROD_ROLLOUT)
-                    smokeTest('prod')
+                    runSmokeTest('prod')
                 }
             }
         }
