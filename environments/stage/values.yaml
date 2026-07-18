@@ -1,6 +1,6 @@
 replicaCount: 3
 image:
-  tag: "79-3f291522"
+  tag: "80-66e75097"
   repository: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
   pullPolicy: IfNotPresent
 resources:
