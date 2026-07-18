@@ -82,38 +82,44 @@ def syncArgoApplication(String applicationName) {
 
 def waitForRollout(String environmentName, String namespaceName, String rolloutName) {
     container('tools') {
-    withCredentials([
-        [$class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-jenkins-credentials',
-          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-    ]) {
-        sh """
-            set -eu
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+              credentialsId: 'aws-jenkins-credentials',
+              accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+              secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+        ]) {
+            sh """
+                set -eu
 
-            aws sts get-caller-identity >/dev/null
+                aws sts get-caller-identity >/dev/null
 
-            timeout 420 sh -c '
-                while true; do
-                    IMAGE=$(kubectl -n "${environmentName}" get rollout "${applicationName}" -o jsonpath="{.spec.template.spec.containers[0].image}")
-                    PHASE=$(kubectl -n "${environmentName}" get rollout "${applicationName}" -o jsonpath="{.status.phase}")
+                timeout 420 sh -c '
+                    while true; do
+                        IMAGE=\$(kubectl -n "${namespaceName}" \
+                            get rollout "${rolloutName}" \
+                            -o jsonpath="{.spec.template.spec.containers[0].image}")
 
-                    echo "${environmentName} image=${IMAGE}, phase=${PHASE}"
+                        PHASE=\$(kubectl -n "${namespaceName}" \
+                            get rollout "${rolloutName}" \
+                            -o jsonpath="{.status.phase}")
 
-                    if [ "${PHASE}" = "Healthy" ]; then
-                        echo "${IMAGE}" | grep -q ":${IMAGE_TAG}$"
-                        exit 0
-                    fi
+                        echo "${environmentName} image=\${IMAGE}, phase=\${PHASE}"
 
-                    if [ "${PHASE}" = "Degraded" ]; then
-                        kubectl -n "${environmentName}" describe rollout "${applicationName}"
-                        exit 1
-                    fi
+                        if [ "\${PHASE}" = "Healthy" ]; then
+                            echo "\${IMAGE}" | grep -q ":${IMAGE_TAG}\$"
+                            exit 0
+                        fi
 
-                    sleep 10
-                done
-            '
-        """
+                        if [ "\${PHASE}" = "Degraded" ]; then
+                            kubectl -n "${namespaceName}" describe rollout "${rolloutName}"
+                            exit 1
+                        fi
+
+                        sleep 10
+                    done
+                '
+            """
+        }
     }
 }
 }
@@ -266,7 +272,7 @@ spec:
         ARGOCD_VERSION = 'v3.0.6'
 
         // This matches the credential ID currently shown in your Jenkins UI.
-        GITHUB_CREDENTIALS_ID = 'github-credetials'
+        GITHUB_CREDENTIALS_ID = 'github-credentials'
         GIT_REPOSITORY = 'github.com/OhWreckedcom10/Final-Project.git'
         GIT_BRANCH = 'main'
     }
