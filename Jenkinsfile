@@ -56,17 +56,27 @@ def commitGitOpsChange(String valuesFile, String message) {
 
 def syncArgoApplication(String applicationName) {
     container('tools') {
-        sh """
-            set -eu
-            /custom-tools/argocd app sync '${applicationName}' \
-                --prune \
-                --timeout 300
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+              credentialsId: 'aws-jenkins-credentials',
+              accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+              secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+        ]) {
+            sh """
+                set -eu
 
-            /custom-tools/argocd app wait '${applicationName}' \
-                --sync \
-                --health \
-                --timeout 300
-        """
+                aws sts get-caller-identity >/dev/null
+
+                /custom-tools/argocd app sync '${applicationName}' \
+                    --prune \
+                    --timeout 300
+
+                /custom-tools/argocd app wait '${applicationName}' \
+                    --sync \
+                    --health \
+                    --timeout 300
+            """
+        }
     }
 }
 
@@ -252,7 +262,7 @@ spec:
         ARGOCD_VERSION = 'v3.0.6'
 
         // This matches the credential ID currently shown in your Jenkins UI.
-        GITHUB_CREDENTIALS_ID = 'github-credentials'
+        GITHUB_CREDENTIALS_ID = 'github-credetials'
         GIT_REPOSITORY = 'github.com/OhWreckedcom10/Final-Project.git'
         GIT_BRANCH = 'main'
     }
@@ -582,21 +592,21 @@ JSON
                     ]) {
                         sh '''
                             set -eu
-
                             mkdir -p "$(dirname "${KUBECONFIG}")"
-
                             aws eks update-kubeconfig \
                                 --name "${EKS_CLUSTER}" \
                                 --region "${AWS_REGION}" \
                                 --kubeconfig "${KUBECONFIG}"
-
                             chmod 600 "${KUBECONFIG}"
 
                             kubectl config set-context \
                                 --current \
                                 --namespace=argocd
 
-                            echo "Current namespace:"
+                            echo "Current Kubernetes context:"
+                            kubectl config current-context
+
+                            echo "Current Kubernetes namespace:"
                             kubectl config view --minify \
                                 -o jsonpath='{..namespace}'
                             echo
