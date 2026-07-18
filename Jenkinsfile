@@ -67,6 +67,9 @@ def syncArgoApplication(String applicationName) {
 
                 aws sts get-caller-identity >/dev/null
 
+                /custom-tools/argocd app get '${applicationName}' \
+                    --hard-refresh
+
                 /custom-tools/argocd app sync '${applicationName}' \
                     --prune \
                     --timeout 300
