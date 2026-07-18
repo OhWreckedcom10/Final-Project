@@ -582,21 +582,21 @@ JSON
                     ]) {
                         sh '''
                             set -eu
+
                             mkdir -p "$(dirname "${KUBECONFIG}")"
+
                             aws eks update-kubeconfig \
                                 --name "${EKS_CLUSTER}" \
                                 --region "${AWS_REGION}" \
                                 --kubeconfig "${KUBECONFIG}"
+
                             chmod 600 "${KUBECONFIG}"
 
                             kubectl config set-context \
                                 --current \
                                 --namespace=argocd
 
-                            echo "Current Kubernetes context:"
-                            kubectl config current-context
-
-                            echo "Current Kubernetes namespace:"
+                            echo "Current namespace:"
                             kubectl config view --minify \
                                 -o jsonpath='{..namespace}'
                             echo
