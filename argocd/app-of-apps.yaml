@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hello-world-apps
+  name: final-project-apps
   namespace: argocd
 spec:
   project: default
@@ -9,6 +9,8 @@ spec:
     repoURL: https://github.com/OhWreckedcom10/Final-Project.git
     targetRevision: main
     path: argocd/apps
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

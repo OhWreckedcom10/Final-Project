@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hello-world-stage
+  name: final-project-stage
   namespace: argocd
 spec:
   project: default
