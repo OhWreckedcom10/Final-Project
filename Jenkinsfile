@@ -666,10 +666,17 @@ EOF
         stage('Validate DEV') {
             steps {
                 container('tools') {
-                    sh '''
-                        chmod +x scripts/smoke-test.sh
-                        scripts/smoke-test.sh dev
-                    '''
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                    ]) {
+                            sh '''
+                                chmod +x scripts/smoke-test.sh
+                                scripts/smoke-test.sh dev
+                            '''
+                    }
                 }
             }
         }
@@ -769,10 +776,17 @@ EOF
         stage('Validate STAGE') {
             steps {
                 container('tools') {
-                    sh '''
-                        chmod +x scripts/smoke-test.sh
-                        scripts/smoke-test.sh stage
-                    '''
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                    ]) {
+                            sh '''
+                                chmod +x scripts/smoke-test.sh
+                                scripts/smoke-test.sh stage
+                            '''
+                    }
                 }
             }
         }
@@ -895,10 +909,17 @@ to the production namespace on AWS EKS?
         stage('Validate PROD') {
             steps {
                 container('tools') {
-                    sh '''
-                        chmod +x scripts/smoke-test.sh
-                        scripts/smoke-test.sh prod
-                    '''
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                          credentialsId: 'aws-jenkins-credentials',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                    ]) {
+                            sh '''
+                                chmod +x scripts/smoke-test.sh
+                                scripts/smoke-test.sh prod
+                            '''
+                    }
                 }
             }
         }
