@@ -1,8 +1,8 @@
 replicaCount: 2
-
 image:
-  tag: "58-843a3479"
-
+  tag: "60-a6bfd99a"
+  repository: 539896451836.dkr.ecr.il-central-1.amazonaws.com/final-project
+  pullPolicy: IfNotPresent
 resources:
   requests:
     cpu: 50m
@@ -10,6 +10,5 @@ resources:
   limits:
     cpu: 250m
     memory: 256Mi
-
 service:
   nodePort: 30081
