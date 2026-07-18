@@ -58,12 +58,12 @@ def syncArgoApplication(String applicationName) {
     container('tools') {
         sh """
             set -eu
-            /custom-tools/argocd --core --namespace argocd \
+            /custom-tools/argocd --core \
                 app sync '${applicationName}' \
                 --prune \
                 --timeout 300
 
-            /custom-tools/argocd --core --namespace argocd \
+            /custom-tools/argocd --core \
                 app wait '${applicationName}' \
                 --sync \
                 --health \
@@ -595,7 +595,7 @@ JSON
                             chmod 600 "${KUBECONFIG}"
                             kubectl get nodes -o wide
                             kubectl get applications -n argocd
-                            /custom-tools/argocd --core --namespace argocd app list
+                            /custom-tools/argocd --core app list
                         '''
                     }
                 }
