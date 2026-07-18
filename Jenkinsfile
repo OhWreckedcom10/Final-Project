@@ -618,50 +618,62 @@ EOF
             }
         }
 
+        // stage('Validate DEV') {
+        //     steps {
+        //         container('tools') {
+        //             withCredentials([
+        //                 [$class: 'AmazonWebServicesCredentialsBinding',
+        //                   credentialsId: 'aws-jenkins-credentials',
+        //                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+        //                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+        //             ]) {
+        //                 sh '''
+        //                     set -eu
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${DEV_NAMESPACE}" \
+        //                         get deployments,pods,services -o wide
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${DEV_NAMESPACE}" \
+        //                         delete pod dev-smoke-test \
+        //                         --ignore-not-found=true
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${DEV_NAMESPACE}" \
+        //                         run dev-smoke-test \
+        //                         --image=curlimages/curl:8.12.1 \
+        //                         --restart=Never \
+        //                         --rm \
+        //                         --attach \
+        //                         --command -- \
+        //                         curl \
+        //                         --fail \
+        //                         --silent \
+        //                         --show-error \
+        //                         --retry 10 \
+        //                         --retry-delay 5 \
+        //                         "http://${APP_NAME}/"
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
+
         stage('Validate DEV') {
             steps {
                 container('tools') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-                    ]) {
-                        sh '''
-                            set -eu
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                get deployments,pods,services -o wide
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                delete pod dev-smoke-test \
-                                --ignore-not-found=true
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${DEV_NAMESPACE}" \
-                                run dev-smoke-test \
-                                --image=curlimages/curl:8.12.1 \
-                                --restart=Never \
-                                --rm \
-                                --attach \
-                                --command -- \
-                                curl \
-                                --fail \
-                                --silent \
-                                --show-error \
-                                --retry 10 \
-                                --retry-delay 5 \
-                                "http://${APP_NAME}/"
-                        '''
-                    }
+                    sh '''
+                        chmod +x scripts/smoke-test.sh
+                        scripts/smoke-test.sh dev
+                    '''
                 }
             }
         }
+
 
         stage('Deploy STAGE') {
             steps {
@@ -709,47 +721,58 @@ EOF
             }
         }
 
+        // stage('Validate STAGE') {
+        //     steps {
+        //         container('tools') {
+        //             withCredentials([
+        //                 [$class: 'AmazonWebServicesCredentialsBinding',
+        //                   credentialsId: 'aws-jenkins-credentials',
+        //                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+        //                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+        //             ]) {
+        //                 sh '''
+        //                     set -eu
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${STAGE_NAMESPACE}" \
+        //                         get deployments,pods,services -o wide
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${STAGE_NAMESPACE}" \
+        //                         delete pod stage-smoke-test \
+        //                         --ignore-not-found=true
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${STAGE_NAMESPACE}" \
+        //                         run stage-smoke-test \
+        //                         --image=curlimages/curl:8.12.1 \
+        //                         --restart=Never \
+        //                         --rm \
+        //                         --attach \
+        //                         --command -- \
+        //                         curl \
+        //                         --fail \
+        //                         --silent \
+        //                         --show-error \
+        //                         --retry 10 \
+        //                         --retry-delay 5 \
+        //                         "http://${APP_NAME}/"
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
+
         stage('Validate STAGE') {
             steps {
                 container('tools') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-                    ]) {
-                        sh '''
-                            set -eu
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                get deployments,pods,services -o wide
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                delete pod stage-smoke-test \
-                                --ignore-not-found=true
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${STAGE_NAMESPACE}" \
-                                run stage-smoke-test \
-                                --image=curlimages/curl:8.12.1 \
-                                --restart=Never \
-                                --rm \
-                                --attach \
-                                --command -- \
-                                curl \
-                                --fail \
-                                --silent \
-                                --show-error \
-                                --retry 10 \
-                                --retry-delay 5 \
-                                "http://${APP_NAME}/"
-                        '''
-                    }
+                    sh '''
+                        chmod +x scripts/smoke-test.sh
+                        scripts/smoke-test.sh stage
+                    '''
                 }
             }
         }
@@ -824,47 +847,58 @@ to the production namespace on AWS EKS?
             }
         }
 
+        // stage('Validate PROD') {
+        //     steps {
+        //         container('tools') {
+        //             withCredentials([
+        //                 [$class: 'AmazonWebServicesCredentialsBinding',
+        //                   credentialsId: 'aws-jenkins-credentials',
+        //                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+        //                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+        //             ]) {
+        //                 sh '''
+        //                     set -eu
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${PROD_NAMESPACE}" \
+        //                         get deployments,pods,services -o wide
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${PROD_NAMESPACE}" \
+        //                         delete pod prod-smoke-test \
+        //                         --ignore-not-found=true
+
+        //                     kubectl \
+        //                         --kubeconfig "${KUBECONFIG}" \
+        //                         --namespace "${PROD_NAMESPACE}" \
+        //                         run prod-smoke-test \
+        //                         --image=curlimages/curl:8.12.1 \
+        //                         --restart=Never \
+        //                         --rm \
+        //                         --attach \
+        //                         --command -- \
+        //                         curl \
+        //                         --fail \
+        //                         --silent \
+        //                         --show-error \
+        //                         --retry 10 \
+        //                         --retry-delay 5 \
+        //                         "http://${APP_NAME}/"
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
+
         stage('Validate PROD') {
             steps {
                 container('tools') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                          credentialsId: 'aws-jenkins-credentials',
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
-                    ]) {
-                        sh '''
-                            set -eu
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                get deployments,pods,services -o wide
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                delete pod prod-smoke-test \
-                                --ignore-not-found=true
-
-                            kubectl \
-                                --kubeconfig "${KUBECONFIG}" \
-                                --namespace "${PROD_NAMESPACE}" \
-                                run prod-smoke-test \
-                                --image=curlimages/curl:8.12.1 \
-                                --restart=Never \
-                                --rm \
-                                --attach \
-                                --command -- \
-                                curl \
-                                --fail \
-                                --silent \
-                                --show-error \
-                                --retry 10 \
-                                --retry-delay 5 \
-                                "http://${APP_NAME}/"
-                        '''
-                    }
+                    sh '''
+                        chmod +x scripts/smoke-test.sh
+                        scripts/smoke-test.sh prod
+                    '''
                 }
             }
         }
