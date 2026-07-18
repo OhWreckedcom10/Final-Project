@@ -122,7 +122,6 @@ def waitForRollout(String environmentName, String namespaceName, String rolloutN
         }
     }
 }
-}
 
 def smokeTest(String environmentName) {
     container('tools') {
