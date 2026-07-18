@@ -371,9 +371,3 @@ This project demonstrates practical experience with:
 - Real-world troubleshooting
 
 ---
-
-## 👨‍💻 Author
-
-**Eshed Porat**
-
-Cloud · DevOps · Kubernetes · AWS · Automation
