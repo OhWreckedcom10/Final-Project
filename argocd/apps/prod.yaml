@@ -5,6 +5,7 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
     repoURL: https://github.com/OhWreckedcom10/Final-Project.git
     targetRevision: main
@@ -12,12 +13,21 @@ spec:
     helm:
       valueFiles:
         - ../../environments/prod/values.yaml
+
   destination:
     server: https://kubernetes.default.svc
     namespace: prod
+
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Rollout
+      jsonPointers:
+        - /spec/replicas
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
