@@ -58,6 +58,7 @@ def syncArgoApplication(String applicationName) {
     container('tools') {
         sh """
             set -eu
+            export ARGOCD_NAMESPACE=argocd
             /custom-tools/argocd --core \
                 app sync '${applicationName}' \
                 --prune \
@@ -595,6 +596,7 @@ JSON
                             chmod 600 "${KUBECONFIG}"
                             kubectl get nodes -o wide
                             kubectl get applications -n argocd
+                            export ARGOCD_NAMESPACE=argocd
                             /custom-tools/argocd --core app list
                         '''
                     }
