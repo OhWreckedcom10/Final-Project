@@ -534,7 +534,7 @@ JSON
 
         stage('Build and Push Image') {
             steps {
-                container('kaniko') {
+                container(name: 'kaniko', shell: '/busybox/sh') {
                     sh '''
                         set -eu
                         /kaniko/executor \
