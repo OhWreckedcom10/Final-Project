@@ -297,6 +297,13 @@ The Load Balancer exposes the application externally and distributes requests th
 │
 ├── Jenkinsfile
 │
+├── docs/
+│   ├── FULL_DOCUMENTATION.md
+│   ├── ARCHITECTURE.md
+│   ├── PIPELINE.md
+│   ├── TROUBLESHOOTING.md
+│   └── screenshots/
+│
 └── README.md
 ```
 
@@ -314,6 +321,35 @@ The Load Balancer exposes the application externally and distributes requests th
 8. Argo CD refreshes and synchronizes the application.
 9. Argo Rollouts deploys the new version.
 10. The release is promoted through DEV, STAGE, and PROD.
+
+---
+
+## 📸 Screenshots
+
+Add screenshots from the live environment under `docs/screenshots/`.
+
+| Component | Suggested file |
+|---|---|
+| Terraform Apply | `docs/screenshots/terraform-apply.png` |
+| Amazon EKS | `docs/screenshots/eks-cluster.png` |
+| Jenkins Pipeline | `docs/screenshots/jenkins-pipeline.png` |
+| Docker Hub | `docs/screenshots/docker-hub.png` |
+| Argo CD | `docs/screenshots/argocd.png` |
+| Argo Rollouts | `docs/screenshots/argo-rollouts.png` |
+| Kubernetes Pods | `docs/screenshots/pods.png` |
+| HPA | `docs/screenshots/hpa.png` |
+| Running Application | `docs/screenshots/application.png` |
+
+---
+
+## 📚 Documentation
+
+Detailed implementation, architecture, troubleshooting, security, and deployment explanations are available in:
+
+- **[Full Project Documentation](docs/FULL_DOCUMENTATION.md)**
+- **[Architecture Guide](docs/ARCHITECTURE.md)**
+- **[CI/CD Pipeline Guide](docs/PIPELINE.md)**
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)**
 
 ---
 
@@ -335,3 +371,9 @@ This project demonstrates practical experience with:
 - Real-world troubleshooting
 
 ---
+
+## 👨‍💻 Author
+
+**Eshed Porat**
+
+Cloud · DevOps · Kubernetes · AWS · Automation
