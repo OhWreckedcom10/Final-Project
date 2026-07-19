@@ -43,7 +43,40 @@ Horizontal Pod Autoscaler
 DEV / STAGE / PROD Environments
 🔄 CI/CD Pipeline
 
+<<<<<<< HEAD
 The following diagram illustrates the complete deployment workflow from source code to production.
+=======
+- Provisioning AWS infrastructure with Terraform
+- Building container images in Kubernetes with Kaniko
+- Scanning images with Trivy
+- Publishing images to ECR
+- Updating Helm configuration
+- Synchronizing Amazon EKS through Argo CD
+- Deploying progressively with Argo Rollouts
+- Promoting releases through DEV, STAGE, and PROD
+
+The application is intentionally lightweight so the project can focus on the surrounding DevOps platform and deployment automation.
+
+---
+
+## ✨ Features
+
+- ☁ Infrastructure as Code with Terraform
+- ☸ Hybrid Kubernetes architecture using k3s and Amazon EKS
+- 🚀 Jenkins CI pipeline with Kubernetes-based agents
+- 📦 Daemonless container builds with Kaniko
+- 🔒 Vulnerability scanning with Trivy
+- 🐳 Docker Hub image registry
+- 📋 Helm-based Kubernetes configuration
+- 🌿 GitOps delivery with Argo CD
+- 🚦 Progressive delivery with Argo Rollouts
+- 📈 Horizontal Pod Autoscaling
+- 🌍 Isolated DEV, STAGE, and PROD environments
+
+---
+
+## 🏗 Hybrid Architecture
+>>>>>>> 915c70093e76b74552a1d419a60984765937ea21
 
 ```mermaid
 flowchart LR
