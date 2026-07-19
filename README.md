@@ -26,7 +26,7 @@ The platform automates the complete software delivery lifecycle:
 - Provisioning AWS infrastructure with Terraform
 - Building container images in Kubernetes with Kaniko
 - Scanning images with Trivy
-- Publishing images to Docker Hub
+- Publishing images to ECR
 - Updating Helm configuration
 - Synchronizing Amazon EKS through Argo CD
 - Deploying progressively with Argo Rollouts
