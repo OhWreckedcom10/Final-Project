@@ -256,33 +256,10 @@ ensuring every release is verified before reaching production.
 └── README.md
 ```
 
----
-
-# 📸 Suggested Screenshots
-
-- Terraform Apply
-- Amazon EKS Cluster
-- Amazon ECR Repository
-- Jenkins Pipeline
-- Argo CD Dashboard
-- Argo Rollouts Dashboard
-- Kubernetes Namespaces
-- Running Application
-
----
-
 # 📚 Documentation
 
 This README provides a high-level overview of the platform.
 
 For detailed implementation steps, architecture decisions, Terraform configuration, troubleshooting guides, and deployment procedures, see:
 
-**📖 docs/FULL_DOCUMENTATION.md**
-
----
-
-# 👨‍💻 Author
-
-**Eshed Porat**
-
-Cloud • AWS • Kubernetes • DevOps • Automation
+**📖 FULL_DOCUMENTATION.md**
