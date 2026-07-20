@@ -21,9 +21,9 @@
 
 This repository demonstrates a complete enterprise-style CI/CD platform built on a **hybrid Kubernetes architecture**.
 
-The CI platform runs on an **on-premises k3s cluster**, while application workloads are deployed to **Amazon Elastic Kubernetes Service (EKS)**.
+The Continuous Integration (CI) platform runs on an **on-premises k3s Kubernetes cluster**, while application workloads are deployed to **Amazon Elastic Kubernetes Service (EKS)**.
 
-The platform automates the entire software delivery lifecycle—from provisioning cloud infrastructure with Terraform, through secure container image creation and vulnerability scanning, to GitOps-based deployments using Argo CD and Progressive Delivery with Argo Rollouts.
+The platform automates the complete software delivery lifecycle—from provisioning cloud infrastructure with **Terraform**, through secure container image creation and vulnerability scanning, to GitOps-based deployments using **Argo CD** and progressive delivery with **Argo Rollouts**.
 
 Rather than focusing on the application itself, this project demonstrates modern DevOps practices commonly used in enterprise production environments.
 
@@ -31,11 +31,11 @@ Rather than focusing on the application itself, this project demonstrates modern
 
 # 🏗 Hybrid Architecture
 
-Unlike traditional cloud-only CI/CD platforms, this solution separates Continuous Integration from application runtime.
+Unlike traditional cloud-only CI/CD platforms, this solution separates the build infrastructure from the runtime environment.
 
-The CI infrastructure executes inside an **on-premises Kubernetes (k3s)** cluster while the deployed application runs inside **Amazon EKS**.
+The CI infrastructure executes inside an **on-premises k3s cluster**, while the deployed application runs inside **Amazon EKS**.
 
-This architecture reflects common enterprise deployments where internal build infrastructure remains on-premises while production workloads leverage cloud scalability.
+This architecture reflects many enterprise environments where internal build systems remain on-premises while production workloads leverage cloud scalability and managed Kubernetes services.
 
 ```mermaid
 flowchart LR
@@ -56,7 +56,7 @@ subgraph AWS["AWS Cloud"]
 
 ECR[Amazon ECR]
 
-GitOps[Git Repository]
+GitOps[GitOps Repository]
 
 ArgoCD[Argo CD]
 
@@ -67,19 +67,12 @@ EKS[Amazon EKS]
 end
 
 Jenkins --> Agent
-
 Agent --> Kaniko
-
 Kaniko --> Trivy
-
 Trivy --> ECR
-
 ECR --> GitOps
-
 GitOps --> ArgoCD
-
 ArgoCD --> Rollouts
-
 Rollouts --> EKS
 ```
 
@@ -97,12 +90,19 @@ To simulate a production-grade deployment strategy, the application is deployed 
 
 Each namespace contains its own:
 
-- Deployment / Rollout
-- Service
-- Horizontal Pod Autoscaler
+- Argo Rollout
+- Kubernetes Service
+- Horizontal Pod Autoscaler (HPA)
 - Helm Release
+- Readiness Probe
+- Liveness Probe
 
 This separation enables safe release promotion while keeping production isolated from development activities.
+
+The application also implements Kubernetes health probes:
+
+- **Readiness Probe** – Ensures the application is ready to receive traffic before it is added to the Service endpoints.
+- **Liveness Probe** – Monitors application health and automatically restarts failed containers.
 
 ```mermaid
 flowchart LR
@@ -116,6 +116,22 @@ PROD["PROD Namespace"]
 DEV -->|"Validated Release"| STAGE
 
 STAGE -->|"Approved Release"| PROD
+
+subgraph Kubernetes
+
+Health["Readiness & Liveness Probes"]
+
+HPA["Horizontal Pod Autoscaler"]
+
+end
+
+DEV --- Health
+STAGE --- Health
+PROD --- Health
+
+DEV --- HPA
+STAGE --- HPA
+PROD --- HPA
 ```
 
 ---
@@ -131,7 +147,7 @@ A["👨‍💻 Developer"] -->|"Git Push"| B["GitHub"]
 
 B -->|"Trigger Pipeline"| C["Jenkins"]
 
-C -->|"Launch Agent"| D["Kubernetes Agent"]
+C -->|"Launch Kubernetes Agent"| D["Jenkins Agent"]
 
 D -->|"Build Image"| E["Kaniko"]
 
@@ -186,17 +202,17 @@ Trivy scans the container image for known vulnerabilities before allowing deploy
 
 ### ⑤ Amazon ECR
 
-Successfully validated images are published to Amazon Elastic Container Registry (ECR).
+Successfully validated images are published to **Amazon Elastic Container Registry (ECR)**.
 
 ---
 
 ### ⑥ Helm Update
 
-The pipeline updates the Helm chart with the newly generated image tag.
+Jenkins updates the Helm chart with the newly generated image tag.
 
 ---
 
-### ⑦ GitOps
+### ⑦ GitOps Repository
 
 The updated Helm configuration is committed to the GitOps repository, making Git the single source of truth.
 
@@ -204,13 +220,17 @@ The updated Helm configuration is committed to the GitOps repository, making Git
 
 ### ⑧ Argo CD
 
-Argo CD detects repository changes and synchronizes the desired state with Amazon EKS.
+Argo CD continuously monitors the GitOps repository and synchronizes Amazon EKS whenever a change is detected.
 
 ---
 
 ### ⑨ Progressive Delivery
 
-Argo Rollouts deploys the application gradually, reducing deployment risk and enabling controlled rollbacks.
+Argo Rollouts gradually deploys the new application version instead of replacing all Pods simultaneously.
+
+During the rollout, Kubernetes continuously evaluates the application using **Readiness** and **Liveness** probes.
+
+Only Pods that successfully pass the readiness probe receive production traffic, while unhealthy Pods detected by the liveness probe are automatically restarted.
 
 ---
 
@@ -220,7 +240,7 @@ Validated releases move through:
 
 **DEV → STAGE → PROD**
 
-ensuring every release is verified before reaching production.
+ensuring every deployment is verified before reaching production.
 
 ---
 
@@ -231,13 +251,15 @@ ensuring every release is verified before reaching production.
 | Cloud | AWS | Cloud Infrastructure |
 | Infrastructure | Terraform | Infrastructure as Code |
 | Kubernetes | Amazon EKS + k3s | Container Orchestration |
-| CI | Jenkins | Pipeline Automation |
-| Image Build | Kaniko | Daemonless Image Builds |
+| Continuous Integration | Jenkins | Pipeline Automation |
+| Image Build | Kaniko | Daemonless Container Builds |
 | Security | Trivy | Vulnerability Scanning |
-| Registry | Amazon ECR | Container Registry |
-| GitOps | Argo CD | Cluster Synchronization |
-| Progressive Delivery | Argo Rollouts | Controlled Deployments |
-| Package Manager | Helm | Kubernetes Package Management |
+| Container Registry | Amazon ECR | Container Image Repository |
+| GitOps | Argo CD | Kubernetes Synchronization |
+| Progressive Delivery | Argo Rollouts | Canary Deployments |
+| Health Monitoring | Kubernetes Probes | Readiness & Liveness Checks |
+| Autoscaling | Horizontal Pod Autoscaler | Automatic Scaling |
+| Package Management | Helm | Kubernetes Package Management |
 | Application | Python Flask | Demo Application |
 
 ---
@@ -246,15 +268,41 @@ ensuring every release is verified before reaching production.
 
 ```text
 .
-├── app/                 Application source code
-├── terraform/           AWS infrastructure
-├── helm/                Helm charts
-├── kubernetes/          Kubernetes manifests
-├── Jenkinsfile          Jenkins pipeline
+├── app/                    Flask application
+├── terraform/              AWS infrastructure
+├── helm/
+│   └── hello-world/
+│       ├── templates/
+│       ├── values.yaml
+│       ├── values-dev.yaml
+│       ├── values-stage.yaml
+│       └── values-prod.yaml
+├── environments/
+│   ├── dev/
+│   ├── stage/
+│   └── prod/
+├── argocd/
+├── scripts/
+├── Jenkinsfile
 ├── docs/
 │   └── FULL_DOCUMENTATION.md
 └── README.md
 ```
+
+---
+
+# 📸 Suggested Screenshots
+
+- Terraform Apply
+- Amazon EKS Cluster
+- Amazon ECR Repository
+- Jenkins Pipeline
+- Argo CD Dashboard
+- Argo Rollouts Dashboard
+- Kubernetes Namespaces
+- Running Application
+
+---
 
 # 📚 Documentation
 
@@ -262,4 +310,12 @@ This README provides a high-level overview of the platform.
 
 For detailed implementation steps, architecture decisions, Terraform configuration, troubleshooting guides, and deployment procedures, see:
 
-**📖 FULL_DOCUMENTATION.md**
+**📖 docs/FULL_DOCUMENTATION.md**
+
+---
+
+# 👨‍💻 Author
+
+**Eshed Porat**
+
+Cloud • AWS • Kubernetes • DevOps • Automation
